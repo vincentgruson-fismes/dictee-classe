@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Dictée autonome</title>
+<style>
+body{font-family:Arial;background:#f5f5f5;padding:20px}
+.container{max-width:900px;margin:auto;background:white;padding:20px;border-radius:10px}
+textarea{width:100%;height:120px;margin-top:10px;line-height:1.5}
+button{margin-top:10px;padding:10px;border:none;border-radius:6px;background:#2563eb;color:white}
+.hidden{display:none}
+.result{margin-top:15px;font-size:18px}
+.error{color:red;text-decoration:underline;cursor:pointer}
+.hint-box{margin-top:15px;padding:12px;border-radius:8px;background:#fff4cc;border-left:6px solid #f59e0b}
+.large-text textarea,.large-text .result{font-size:24px}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h2>📚 Dictée autonome</h2>
+
+<div id="home">
+<button onclick="showTeacher()">👨‍🏫 Enseignant</button>
+<button onclick="showStudent()">👩‍🎓 Élève</button>
+</div>
+
+<div id="teacher" class="hidden">
+<h3>Créer la dictée</h3>
+<button id="toggleDictBtn" onclick="toggleDict()">👁️ Cacher la dictée</button>
+<div id="dictContainer">
+<textarea id="teacherText"></textarea>
+</div>
+<button onclick="generateLink()">🔗 Générer lien élève</button>
+
+<div id="linkBox" style="margin-top:10px"></div>
+
+<div id="qrContainer" style="margin-top:15px;text-align:center"></div>
+<button onclick="backHome()">Retour</button>
+</div>
+
+<div id="student" class="hidden">
+<div style="background:#eef2ff;padding:10px;border-radius:8px;margin-bottom:10px">
+<b>Consigne :</b> Écris la dictée puis clique sur vérifier. Les erreurs seront soulignées. Clique sur un mot souligné pour obtenir un indice.
+</div>
+<input id="studentName" placeholder="Prénom">
+<button id="playBtn" onclick="togglePlay()">🔊 Écouter la dictée</button>
+<button onclick="playDictationSlow()">📝 Mode dictée réelle</button>
+<button onclick="playWordByWord()">🔤 Lire mot à mot</button>
+<button onclick="toggleSize()">🔠 Taille +</button>
+<textarea id="studentText" placeholder="Tape la dictée..."></textarea>
+<button onclick="checkText()">Vérifier</button>
+
+<div class="result" id="result"></div>
+<div id="score"></div>
+<div id="errors"></div>
+
+<div id="hintBox" class="hint-box hidden">
+<b>Indice</b>
+<div id="hint"></div>
+</div>
+
+<button onclick="backHome()">Retour</button>
+</div>
+
+</div>
+
+<script>
+
+  let errorStats = {
+ homophones:0,
+ accords:0,
+ vocabulaire:0
+};
+let modelText = "";
+let hints = {};
+let clicks = {};
+
+// récupérer dictée depuis le lien
+const params = new URLSearchParams(window.location.search);
+if(params.get("text")){
+ modelText = decodeURIComponent(params.get("text"));
+}
+
+function showTeacher(){
+document.getElementById("home").classList.add("hidden");
+document.getElementById("teacher").classList.remove("hidden");
+}
+
+function showStudent(){
+document.getElementById("home").classList.add("hidden");
+document.getElementById("student").classList.remove("hidden");
+}
+
+function backHome(){
+document.getElementById("home").classList.remove("hidden");
+document.getElementById("teacher").classList.add("hidden");
+document.getElementById("student").classList.add("hidden");
+}
+
+function toggleDict(){
+ const box = document.getElementById("dictContainer");
+ const btn = document.getElementById("toggleDictBtn");
+ if(box.classList.contains("hidden")){
+  box.classList.remove("hidden");
+  btn.innerText = "👁️ Cacher la dictée";
+ } else {
+  box.classList.add("hidden");
+  btn.innerText = "👁️ Afficher la dictée";
+ }
+}
+
+function generateLink(){
+const text=document.getElementById("teacherText").value;
+const encoded=encodeURIComponent(text);
+
+const base=window.location.origin+window.location.pathname;
+const link=base+"?text="+encoded;
+
+document.getElementById("linkBox").innerHTML="<b>Lien :</b><br>"+link;
+
+const qrUrl="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data="+encodeURIComponent(link);
+
+document.getElementById("qrContainer").innerHTML = "<div><b>QR code élèves :</b></div><img src='"+qrUrl+"' style='margin-top:10px'>";
+}
+
+function tokenize(text){
+return text.trim().split(/\s+/);
+}
+
+function detectHint(w, exp){
+ w=w.toLowerCase(); 
+ exp=(exp||"").toLowerCase();
+
+ if((w==="a"||w==="à")&&(exp==="a"||exp==="à")){
+  errorStats.homophones++;
+  return "avait";
+ }
+
+ if((w==="et"||w==="est")&&(exp==="et"||exp==="est")){
+  errorStats.homophones++;
+  return "était";
+ }
+
+ if((w==="on"||w==="ont")&&(exp==="on"||exp==="ont")){
+  errorStats.homophones++;
+  return "avaient";
+ }
+
+ if((w==="son"||w==="sont")&&(exp==="son"||exp==="sont")){
+  errorStats.homophones++;
+  return "étaient";
+ }
+
+ // accord simple pluriel
+ if(exp.endsWith("s") && !w.endsWith("s")){
+  errorStats.accords++;
+  return "pluriel";
+ }
+ }
+
+ // sinon vocabulaire
+ errorStats.vocabulaire++;
+ return "";
+}
+
+function checkText(){
+errorStats = {homophones:0, accords:0, vocabulaire:0};
+  const student = tokenize(document.getElementById("studentText").value);
+const model = tokenize(modelText);
+
+let res="";
+hints={}; clicks={};
+
+let correct=0;
+let errors=0;
+
+for(let i=0;i<student.length;i++){
+if(student[i]===model[i]){
+res+=student[i]+" ";
+correct++;
+}else{
+errors++;
+const h=detectHint(student[i],model[i]);
+hints[i]=h;
+res+=`<span class='error' onclick='showHint(${i})'>${student[i]}</span> `;
+}
+}
+
+let score=Math.round((correct/model.length)*100);
+
+document.getElementById("result").innerHTML=res;
+document.getElementById("score").innerText="Score : "+score+" %";
+document.getElementById("errors").innerText="Erreurs : "+errors;
+let synthese = `
+Synthèse :
+Homophones : ${errorStats.homophones}
+Accords : ${errorStats.accords}
+Vocabulaire : ${errorStats.vocabulaire}
+`;
+
+let synthDiv = document.getElementById("synthese");
+
+if(!synthDiv){
+ synthDiv = document.createElement("div");
+ synthDiv.id = "synthese";
+ synthDiv.style.marginTop = "10px";
+ document.getElementById("errors").appendChild(synthDiv);
+}
+  synthDiv.innerText = synthese;
+}
+
+  
+function showHint(i){
+if(!clicks[i]) clicks[i]=0;
+clicks[i]++;
+
+let h=hints[i];
+let message="";
+
+// HOMOPHONES
+if(h==="avait"||h==="était"||h==="avaient"||h==="étaient"){
+ if(clicks[i]===1){
+  message="Peux-tu remplacer par '"+h+"' ?";
+ }else{
+  if(h==="avait") message="Si 'avait' fonctionne → a, sinon → à";
+  else if(h==="était") message="Si 'était' fonctionne → est, sinon → et";
+  else if(h==="avaient") message="Si 'avaient' fonctionne → ont, sinon → on";
+  else if(h==="étaient") message="Si 'étaient' fonctionne → sont, sinon → son";
+ }
+}
+
+// PLURIEL
+else if(h==="pluriel"){
+ if(clicks[i]===1){
+  message="C'est peut-être un groupe nominal, regarde le déterminant pour savoir comment on accorde.";
+ }else{
+  message="Tu as fait une erreur de pluriel.";
+ }
+}
+
+// AUTRE
+else{
+ message="Réfléchis au mot attendu.";
+}
+
+const box=document.getElementById("hintBox");
+box.classList.remove("hidden");
+
+document.getElementById("hint").innerText=message;
+}
+
+let isPlaying = false;
+
+function togglePlay(){
+ if(isPlaying){
+  speechSynthesis.cancel();
+  isPlaying = false;
+  document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
+ } else {
+  const utterance=new SpeechSynthesisUtterance(modelText);
+  utterance.lang="fr-FR";
+
+  utterance.onend = ()=>{
+    isPlaying = false;
+    document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
+  };
+
+  speechSynthesis.speak(utterance);
+  isPlaying = true;
+  document.getElementById("playBtn").innerText = "⏹️ Arrêter";
+ }
+}
+
+function playDictationSlow(){
+ speechSynthesis.cancel();
+
+ const parts = modelText.split(/([\.!\?])/).filter(p=>p.trim()!=="");
+ let i=0;
+
+ function speakNext(){
+  if(i>=parts.length) return;
+
+  const chunk = parts[i] + (parts[i+1]||"");
+  i += 2;
+
+  const u = new SpeechSynthesisUtterance(chunk.trim());
+  u.lang = "fr-FR";
+   u.rate = 0.7; // lent
+  u.onend = ()=> setTimeout(speakNext, 800); // pause
+
+  speechSynthesis.speak(u);
+ }
+
+ speakNext();
+}
+
+  function playWordByWord(){
+ speechSynthesis.cancel();
+
+ const words = modelText.split(/\s+/);
+ let i=0;
+
+ function speakNext(){
+  if(i>=words.length) return;
+
+  const u = new SpeechSynthesisUtterance(words[i]);
+  u.lang = "fr-FR";
+  u.rate = 0.8;
+
+   i++;
+  u.onend = ()=> setTimeout(speakNext, 400);
+
+  speechSynthesis.speak(u);
+ }
+
+ speakNext();
+}
+  
+let largeMode=false;
+function toggleSize(){
+ largeMode=!largeMode;
+ if(largeMode){
+  document.body.classList.add("large-text");
+ }else{
+  document.body.classList.remove("large-text");
+ }
+}
+
+</script>
+</body>
+</html>
