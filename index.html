@@ -53,7 +53,7 @@ button{margin-top:10px;padding:10px;border:none;border-radius:6px;background:#25
 
 <div class="result" id="result"></div>
 <div id="score"></div>
-<div id="errors"></div>
+<div id="history" style="margin-top:10px;font-size:14px"></div>
 
 <div id="hintBox" class="hint-box hidden">
 <b>Indice</b>
@@ -191,6 +191,18 @@ let score=Math.round((correct/model.length)*100);
 document.getElementById("result").innerHTML=res;
 document.getElementById("score").innerText="Score : "+score+" %";
 document.getElementById("errors").innerText="Erreurs : "+errors;
+  // sauvegarde historique
+let history = JSON.parse(localStorage.getItem("history") || "[]");
+history.push(errors);
+localStorage.setItem("history", JSON.stringify(history));
+
+// affichage
+let historyText = "Historique : ";
+history.forEach((e,i)=>{
+ historyText += "Essai " + (i+1) + " : " + e + " erreurs | ";
+});
+
+document.getElementById("history").innerText = historyText;
 let synthese = `
 Synthèse :
 Homophones : ${errorStats.homophones}
@@ -294,29 +306,42 @@ function playDictationSlow(){
  speakNext();
 }
 
-  function playWordByWord(){
- speechSynthesis.cancel();
+  let isWordPlaying = false;
 
- const words = modelText.split(/\s+/);
- let i=0;
+function toggleWordByWord(){
+ if(isWordPlaying){
+  speechSynthesis.cancel();
+  isWordPlaying = false;
+  document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
+ } else {
 
- function speakNext(){
-  if(i>=words.length) return;
+  speechSynthesis.cancel();
+  const words = modelText.split(/\s+/);
+  let i=0;
 
-  const u = new SpeechSynthesisUtterance(words[i]);
-  u.lang = "fr-FR";
-  u.rate = 0.8;
+  function speakNext(){
+   if(i>=words.length){
+    isWordPlaying = false;
+    document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
+    return;
+    }
+
+   const u = new SpeechSynthesisUtterance(words[i]);
+   u.lang = "fr-FR";
+   u.rate = 0.8;
 
    i++;
-  u.onend = ()=> setTimeout(speakNext, 400);
+   u.onend = ()=> setTimeout(speakNext, 400);
 
-  speechSynthesis.speak(u);
+   speechSynthesis.speak(u);
+  }
+
+  isWordPlaying = true;
+  document.getElementById("wordBtn").innerText = "⏹️ Arrêter";
+  speakNext();
  }
-
- speakNext();
 }
   
-let largeMode=false;
 function toggleSize(){
  largeMode=!largeMode;
  if(largeMode){
