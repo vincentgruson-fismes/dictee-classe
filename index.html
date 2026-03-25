@@ -46,7 +46,7 @@ button{margin-top:10px;padding:10px;border:none;border-radius:6px;background:#25
 <input id="studentName" placeholder="Prénom">
 <button id="playBtn" onclick="togglePlay()">🔊 Écouter la dictée</button>
 <button onclick="playDictationSlow()">📝 Mode dictée réelle</button>
-<button onclick="playWordByWord()">🔤 Lire mot à mot</button>
+<button id="wordBtn" onclick="toggleWordByWord()">🔤 Lire mot à mot</button>
 <button onclick="toggleSize()">🔠 Taille +</button>
 <textarea id="studentText" placeholder="Tape la dictée..."></textarea>
 <button onclick="checkText()">Vérifier</button>
@@ -309,37 +309,47 @@ function playDictationSlow(){
   let isWordPlaying = false;
 
 function toggleWordByWord(){
+
  if(isWordPlaying){
   speechSynthesis.cancel();
   isWordPlaying = false;
   document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
- } else {
+  return; // 🔴 IMPORTANT
+ }
 
-  speechSynthesis.cancel();
-  const words = modelText.split(/\s+/);
-  let i=0;
+ speechSynthesis.cancel();
+
+ const words = modelText.split(/\s+/);
+ let i=0;
 
   function speakNext(){
-   if(i>=words.length){
-    isWordPlaying = false;
-    document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
-    return;
-    }
 
-   const u = new SpeechSynthesisUtterance(words[i]);
-   u.lang = "fr-FR";
-   u.rate = 0.8;
+  if(!isWordPlaying) return; // 🔴 sécurité arrêt
 
-   i++;
-   u.onend = ()=> setTimeout(speakNext, 400);
-
-   speechSynthesis.speak(u);
+  if(i>=words.length){
+   isWordPlaying = false;
+   document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
+   return;
   }
 
-  isWordPlaying = true;
-  document.getElementById("wordBtn").innerText = "⏹️ Arrêter";
-  speakNext();
+  const u = new SpeechSynthesisUtterance(words[i]);
+  u.lang = "fr-FR";
+  u.rate = 0.8;
+
+  i++;
+   u.onend = ()=>{
+   if(isWordPlaying){
+    setTimeout(speakNext, 400);
+   }
+  };
+
+  speechSynthesis.speak(u);
  }
+
+ isWordPlaying = true;
+ document.getElementById("wordBtn").innerText = "⏹️ Arrêter";
+
+ speakNext();
 }
   
 function toggleSize(){
