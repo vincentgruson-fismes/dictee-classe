@@ -45,7 +45,7 @@ button{margin-top:10px;padding:10px;border:none;border-radius:6px;background:#25
 </div>
 <input id="studentName" placeholder="Prénom">
 <button id="playBtn" onclick="togglePlay()">🔊 Écouter la dictée</button>
-<button onclick="playDictationSlow()">📝 Mode dictée réelle</button>
+<button id="Slowbtn" onclick="playDictationSlow()">📝 Mode dictée réelle</button>
 <button id="wordBtn" onclick="toggleWordByWord()">🔤 Lire mot à mot</button>
 <button onclick="toggleSize()">🔠 Taille +</button>
 <textarea id="studentText" placeholder="Tape la dictée..."></textarea>
@@ -293,43 +293,79 @@ function togglePlay(){
   document.getElementById("playBtn").innerText = "⏹️ Arrêter";
  }
 }
+let isSlowPlaying = false;
 
-function playDictation(){
+function playDictationSlow(){
+
+ const btn = document.getElementById("slowBtn");
+
+ // 🔴 si on arrête
+ if(isSlowPlaying){
+  speechSynthesis.cancel();
+  isSlowPlaying = false;
+  btn.innerText = "📝 Mode dictée réelle";
+  return;
+ }
 
  speechSynthesis.cancel();
+ isSlowPlaying = true;
+ btn.innerText = "⏹️ Arrêter";
+  let isSlowPlaying = false;
 
- // ajouter les mots de ponctuation
+function playDictationSlow(){
+
+ const btn = document.getElementById("slowBtn");
+
+ // 🔴 si on arrête
+ if(isSlowPlaying){
+  speechSynthesis.cancel();
+  isSlowPlaying = false;
+  btn.innerText = "📝 Mode dictée réelle";
+  return;
+ }
+
+ speechSynthesis.cancel();
+ isSlowPlaying = true;
+ btn.innerText = "⏹️ Arrêter";
+
+ // ajouter la ponctuation parlée
  const text = addPunctuationSpeech(modelText);
 
- // découper par ponctuation
+ // découper intelligemment
  const parts = text.split(/(point|virgule|point d'interrogation|point d'exclamation)/);
 
  let i = 0;
 
  function speakNext(){
 
-  if(i >= parts.length) return;
+  if(!isSlowPlaying) return;
 
-  let chunk = parts[i].trim();
+  if(i >= parts.length){
+   isSlowPlaying = false;
+   btn.innerText = "📝 Mode dictée réelle";
+   return;
+  }
+let chunk = parts[i].trim();
   i++;
-if(chunk === "") {
-    speakNext();
-    return;
+
+  if(chunk === ""){
+   speakNext();
+   return;
   }
 
   const u = new SpeechSynthesisUtterance(chunk);
   u.lang = "fr-FR";
-
-  // ralentir un peu la lecture générale
   u.rate = 0.65;
 
   u.onend = () => {
-    // pause plus longue après ponctuation
-    let delay = (chunk.includes("point")) ? 900 :
-            (chunk.includes("virgule")) ? 500 : 200;
-        setTimeout(speakNext, delay);
+   let delay =
+    chunk.includes("point") ? 900 :
+    chunk.includes("virgule") ? 500 :
+     200;
+
+   setTimeout(speakNext, delay);
   };
-   
+
   speechSynthesis.speak(u);
  }
 
