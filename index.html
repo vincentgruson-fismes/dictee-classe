@@ -68,6 +68,16 @@ button{margin-top:10px;padding:10px;border:none;border-radius:6px;background:#25
 
 <script>
 
+  function addPunctuationSpeech(text){
+ return text
+  .replace(/\./g, " point ")
+  .replace(/,/g, " virgule ")
+  .replace(/\?/g, " point d'interrogation ")
+  .replace(/!/g, " point d'exclamation ")
+  .replace(/:/g, " deux points ")
+  .replace(/;/g, " point-virgule ");
+}
+  
   let errorStats = {
  homophones:0,
  accords:0,
@@ -270,7 +280,7 @@ function togglePlay(){
   isPlaying = false;
   document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
  } else {
-  const utterance=new SpeechSynthesisUtterance(modelText);
+  const utterance=new SpeechSynthesisUtterance(addPunctuationSpeech(modelText));
   utterance.lang="fr-FR";
 
   utterance.onend = ()=>{
@@ -287,7 +297,7 @@ function togglePlay(){
 function playDictationSlow(){
  speechSynthesis.cancel();
 
- const parts = modelText.split(/([\.!\?])/).filter(p=>p.trim()!=="");
+ const parts = addPunctuationSpeech(modelText).split(/([\.!\?])/).filter(p=>p.trim()!=="");
  let i=0;
 
  function speakNext(){
@@ -320,7 +330,7 @@ function toggleWordByWord(){
 
  speechSynthesis.cancel();
 
- const words = modelText.split(/\s+/);
+ const words = addPunctuationSpeech(modelText).split(/\s+/);
  let i=0;
 
   function speakNext(){
