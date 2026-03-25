@@ -321,12 +321,13 @@ if(chunk === "") {
   u.lang = "fr-FR";
 
   // ralentir un peu la lecture générale
-  u.rate = 0.85;
+  u.rate = 0.65;
 
   u.onend = () => {
     // pause plus longue après ponctuation
-    let delay = (chunk.includes("point") || chunk.includes("virgule")) ? 600 : 200;
-    setTimeout(speakNext, delay);
+    let delay = (chunk.includes("point")) ? 900 :
+            (chunk.includes("virgule")) ? 500 : 200;
+        setTimeout(speakNext, delay);
   };
    
   speechSynthesis.speak(u);
