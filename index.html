@@ -13,6 +13,10 @@ button{margin-top:10px;padding:10px;border:none;border-radius:6px;background:#25
 .error{color:red;text-decoration:underline;cursor:pointer}
 .hint-box{margin-top:15px;padding:12px;border-radius:8px;background:#fff4cc;border-left:6px solid #f59e0b}
 .large-text textarea,.large-text .result{font-size:24px}
+  button:hover{
+ opacity:0.9;
+ cursor:pointer;
+}
 </style>
 </head>
 <body>
@@ -45,12 +49,12 @@ button{margin-top:10px;padding:10px;border:none;border-radius:6px;background:#25
 </div>
 <input id="studentName" placeholder="Prénom">
 <button id="playBtn" onclick="togglePlay()">🔊 Écouter la dictée</button>
-<button id="Slowbtn" onclick="playDictationSlow()">📝 Mode dictée réelle</button>
+<button id="slowBtn" onclick="playDictationSlow()">📝 Mode dictée réelle</button>
 <button id="wordBtn" onclick="toggleWordByWord()">🔤 Lire mot à mot</button>
 <button onclick="toggleSize()">🔠 Taille +</button>
 <textarea id="studentText" placeholder="Tape la dictée..."></textarea>
 <button onclick="checkText()">Vérifier</button>
-
+<button onclick="resetHistory()">🧹 Réinitialiser</button>
 <div class="result" id="result"></div>
 <div id="score"></div>
   <div id="errors"></div>
@@ -68,6 +72,13 @@ button{margin-top:10px;padding:10px;border:none;border-radius:6px;background:#25
 
 <script>
 
+ function resetHistory(){
+ localStorage.removeItem("history");
+ document.getElementById("history").innerText = "";
+}
+  
+  let largeMode = false;
+  
   function addPunctuationSpeech(text){
  return text
   .replace(/\./g, " point ")
@@ -197,7 +208,7 @@ res+=`<span class='error' onclick='showHint(${i})'>${student[i]}</span> `;
 }
 }
 
-let score=Math.round((correct/model.length)*100);
+let score = model.length ? Math.round((correct/model.length)*100) : 0;
 
 document.getElementById("result").innerHTML=res;
 document.getElementById("score").innerText="Score : "+score+" %";
@@ -275,28 +286,65 @@ document.getElementById("hint").innerText=message;
 let isPlaying = false;
 
 function togglePlay(){
+
+ const btn = document.getElementById("playBtn");
+
  if(isPlaying){
   speechSynthesis.cancel();
   isPlaying = false;
-  document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
- } else {
-  const utterance=new SpeechSynthesisUtterance(addPunctuationSpeech(modelText));
-  utterance.lang="fr-FR";
+  btn.innerText = "🔊 Écouter la dictée";
+  return;
+ }
 
-  utterance.onend = ()=>{
-    isPlaying = false;
-    document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
+ speechSynthesis.cancel();
+ isPlaying = true;
+ btn.innerText = "⏹️ Arrêter";
+
+ const text = addPunctuationSpeech(modelText);
+ const parts = text.split(/(point|virgule|point d'interrogation|point d'exclamation)/);
+
+ let i = 0;
+function speakNext(){
+
+  if(!isPlaying) return;
+
+  if(i >= parts.length){
+   isPlaying = false;
+   btn.innerText = "🔊 Écouter la dictée";
+   return;
+  }
+
+  let chunk = parts[i].trim();
+  i++;
+
+  if(chunk === ""){
+   speakNext();
+   return;
+  }
+
+  const u = new SpeechSynthesisUtterance(chunk);
+  u.lang = "fr-FR";
+ u.rate = 0.75;
+
+  u.onend = () => {
+   let delay =
+    chunk.includes("point") ? 800 :
+    chunk.includes("virgule") ? 400 :
+    200;
+
+   setTimeout(speakNext, delay);
   };
 
-  speechSynthesis.speak(utterance);
-  isPlaying = true;
-  document.getElementById("playBtn").innerText = "⏹️ Arrêter";
+  speechSynthesis.speak(u);
  }
+
+ speakNext();
 }
+  
 let isSlowPlaying = false;
 
 function playDictationSlow(){
-
+speechSynthesis.cancel();
  const btn = document.getElementById("slowBtn");
 
  // 🔴 si on arrête
@@ -358,7 +406,7 @@ let chunk = parts[i].trim();
   let isWordPlaying = false;
 
 function toggleWordByWord(){
-
+speechSynthesis.cancel();
  if(isWordPlaying){
   speechSynthesis.cancel();
   isWordPlaying = false;
@@ -383,7 +431,10 @@ function toggleWordByWord(){
 
   const u = new SpeechSynthesisUtterance(words[i]);
   u.lang = "fr-FR";
-  u.rate = 0.8;
+ u.rate = (
+ words[i].includes("point") ||
+ words[i].includes("virgule")
+) ? 0.6 : 0.8;
 
   i++;
    u.onend = ()=>{
