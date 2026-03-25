@@ -310,23 +310,6 @@ function playDictationSlow(){
  speechSynthesis.cancel();
  isSlowPlaying = true;
  btn.innerText = "⏹️ Arrêter";
-  let isSlowPlaying = false;
-
-function playDictationSlow(){
-
- const btn = document.getElementById("slowBtn");
-
- // 🔴 si on arrête
- if(isSlowPlaying){
-  speechSynthesis.cancel();
-  isSlowPlaying = false;
-  btn.innerText = "📝 Mode dictée réelle";
-  return;
- }
-
- speechSynthesis.cancel();
- isSlowPlaying = true;
- btn.innerText = "⏹️ Arrêter";
 
  // ajouter la ponctuation parlée
  const text = addPunctuationSpeech(modelText);
