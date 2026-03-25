@@ -294,29 +294,47 @@ function togglePlay(){
  }
 }
 
-function playDictationSlow(){
+function playDictation(){
+
  speechSynthesis.cancel();
 
- const parts = addPunctuationSpeech(modelText).split(/([\.!\?])/).filter(p=>p.trim()!=="");
- let i=0;
+ // ajouter les mots de ponctuation
+ const text = addPunctuationSpeech(modelText);
+
+ // découper par ponctuation
+ const parts = text.split(/(point|virgule|point d'interrogation|point d'exclamation)/);
+
+ let i = 0;
 
  function speakNext(){
-  if(i>=parts.length) return;
 
-  const chunk = parts[i] + (parts[i+1]||"");
-  i += 2;
+  if(i >= parts.length) return;
 
-  const u = new SpeechSynthesisUtterance(chunk.trim());
+  let chunk = parts[i].trim();
+  i++;
+if(chunk === "") {
+    speakNext();
+    return;
+  }
+
+  const u = new SpeechSynthesisUtterance(chunk);
   u.lang = "fr-FR";
-   u.rate = 0.7; // lent
-  u.onend = ()=> setTimeout(speakNext, 800); // pause
 
+  // ralentir un peu la lecture générale
+  u.rate = 0.85;
+
+  u.onend = () => {
+    // pause plus longue après ponctuation
+    let delay = (chunk.includes("point") || chunk.includes("virgule")) ? 600 : 200;
+    setTimeout(speakNext, delay);
+  };
+   
   speechSynthesis.speak(u);
  }
 
  speakNext();
 }
-
+  
   let isWordPlaying = false;
 
 function toggleWordByWord(){
