@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Dictée autonome</title>
+ <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
 
 body{
@@ -416,7 +417,6 @@ doc.text(errors, 10, 40);
    
 
 let isWordPlaying = false;
-let currentWordIndex = 0;
  
 function toggleWordByWord(){
 
