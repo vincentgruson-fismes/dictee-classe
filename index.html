@@ -8,102 +8,118 @@
 body{
  font-family:Arial, sans-serif;
  background:#eef2f7;
- padding:20px;
+ padding:15px;
 }
 
 .container{
- max-width:900px;
+ max-width:100%;
  margin:auto;
  background:white;
- padding:25px;
+ padding:20px;
  border-radius:12px;
  box-shadow:0 4px 12px rgba(0,0,0,0.08);
 }
 
+/* TITRE */
 h2{
-text-align:center;
- margin-bottom:20px;
+ text-align:center;
+ font-size:24px;
+ margin-bottom:15px;
 }
 
+/* TEXTE */
 textarea{
  width:100%;
- height:140px;
+ height:160px;
  margin-top:10px;
- line-height:1.6;
- padding:10px;
+ line-height:1.8;
+ padding:12px;
  border:1px solid #ddd;
- border-radius:8px;
- font-size:16px;
+ border-radius:10px;
+ font-size:20px;
 }
 
+/* BOUTONS TABLETTE */
 button{
-  margin-top:10px;
- padding:10px 14px;
+ margin-top:12px;
+ padding:14px;
  border:none;
- border-radius:8px;
+ border-radius:10px;
  background:#2563eb;
  color:white;
- font-size:14px;
- transition:0.2s;
+ font-size:18px;
+ width:100%;
+}
+
+/* ESPACEMENT boutons */
+button + button{
+ margin-top:10px;
 }
 
 button:hover{
  background:#1e40af;
- cursor:pointer;
-}
-.hidden{
- display:none;
 }
 
+/* INPUT */
+input{
+ width:100%;
+ padding:12px;
+ border-radius:8px;
+ border:1px solid #ccc;
+ font-size:18px;
+ margin-top:10px;
+}
+
+/* RESULTATS */
 .result{
  margin-top:15px;
+ font-size:20px;
+ line-height:1.8;
+}
+
+/* ERREURS */
+.error{
+ color:#b91c1c;
+ background:#fecaca;
+ padding:4px 6px;
+ border-radius:6px;
+ font-weight:bold;
+}
+
+/* INDICE */
+.hint-box{
+ margin-top:15px;
+ padding:16px;
+ border-radius:10px;
+ background:#fff7ed;
+ border-left:6px solid #f59e0b;
+ font-size:18px;
+}
+
+/* BLOCS RESULTATS */
+#score, #errors, #history, #synthese{
+ margin-top:10px;
+ padding:10px;
+ border-radius:8px;
+ background:#f1f5f9;
+ font-size:18px;
+}
+
+/* CONSIGNE */
+#student > div{
  font-size:18px;
  line-height:1.6;
 }
 
-.error{
- color:#dc2626;
- background:#fee2e2;
-  padding:2px 4px;
- border-radius:4px;
- text-decoration:none;
- cursor:pointer;
-}
-
-.hint-box{
- margin-top:15px;
- padding:14px;
- border-radius:10px;
- background:#fff7ed;
- border-left:6px solid #f59e0b;
-}
-
+/* MODE GROS TEXTE */
 .large-text textarea,
 .large-text .result{
- font-size:24px;
+ font-size:28px;
 }
 
-/* zones résultats */
-#score, #errors, #history, #synthese{
- margin-top:10px;
- padding:8px;
- border-radius:6px;
- background:#f8fafc;
-  }
-
-/* consigne */
-#student > div{
- font-size:15px;
- line-height:1.5;
+.hidden{
+ display:none;
 }
-
-/* input prénom */
-input{
- padding:8px;
- border-radius:6px;
- border:1px solid #ccc;
- margin-top:10px;
-  }
 
 </style>
 
@@ -163,6 +179,8 @@ input{
 
 <script>
 
+ let currentWordIndex = 0;
+ 
  function resetHistory(){
  localStorage.removeItem("history");
  document.getElementById("history").innerText = "";
@@ -374,63 +392,58 @@ box.classList.remove("hidden");
 document.getElementById("hint").innerText=message;
 }
 
-let isPlaying = false;
+let isWordPlaying = false;
+let currentWordIndex = 0;
 
-function togglePlay(){
-
- const btn = document.getElementById("playBtn");
-
- if(isPlaying){
-  speechSynthesis.cancel();
-  isPlaying = false;
-  btn.innerText = "🔊 Écouter la dictée";
-  return;
- }
+function toggleWordByWord(){
 
  speechSynthesis.cancel();
- isPlaying = true;
- btn.innerText = "⏹️ Arrêter";
 
- const text = addPunctuationSpeech(modelText);
- const parts = text.split(/(point|virgule|point d'interrogation|point d'exclamation)/);
-
- let i = 0;
-function speakNext(){
-
-  if(!isPlaying) return;
-
-  if(i >= parts.length){
-   isPlaying = false;
-   btn.innerText = "🔊 Écouter la dictée";
-   return;
-  }
-
-  let chunk = parts[i].trim();
-  i++;
-
-  if(chunk === ""){
-   speakNext();
-   return;
-  }
-
-  const u = new SpeechSynthesisUtterance(chunk);
-  u.lang = "fr-FR";
- u.rate = 0.75;
-
-  u.onend = () => {
-   let delay =
-    chunk.includes("point") ? 800 :
-    chunk.includes("virgule") ? 400 :
-    200;
-
-   setTimeout(speakNext, delay);
-  };
-
-  speechSynthesis.speak(u);
- }
-
- speakNext();
+ if(isWordPlaying){
+  isWordPlaying = false;
+  document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
+  return;
 }
+
+ const words = addPunctuationSpeech(modelText).split(/\s+/);
+
+ function speakNext(){
+
+  if(!isWordPlaying) return;
+
+  if(currentWordIndex >= words.length){
+   isWordPlaying = false;
+   currentWordIndex = 0; // reset à la fin
+   document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
+   return;
+  }
+
+  const word = words[currentWordIndex];
+
+  const u = new SpeechSynthesisUtterance(word);
+  u.lang = "fr-FR";
+
+  u.rate = (
+    word.includes("point") ||
+   word.includes("virgule")
+  ) ? 0.6 : 0.8;
+
+  currentWordIndex++;
+
+  u.onend = ()=>{
+   if(isWordPlaying){
+    setTimeout(speakNext, 400);
+   }
+   word.includes("point") ||
+   word.includes("virgule")
+  ) ? 0.6 : 0.8;
+
+  currentWordIndex++;
+
+  u.onend = ()=>{
+   if(isWordPlaying){
+    setTimeout(speakNext, 400);
+   }  
   
 let isSlowPlaying = false;
 
