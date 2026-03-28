@@ -506,55 +506,7 @@ let chunk = parts[i].trim();
  speakNext();
 }
   
-  let isWordPlaying = false;
-
-function toggleWordByWord(){
-speechSynthesis.cancel();
- if(isWordPlaying){
-  speechSynthesis.cancel();
-  isWordPlaying = false;
-  document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
-  return; // 🔴 IMPORTANT
- }
-
- speechSynthesis.cancel();
-
- const words = addPunctuationSpeech(modelText).split(/\s+/);
- let i=0;
-
-  function speakNext(){
-
-  if(!isWordPlaying) return; // 🔴 sécurité arrêt
-
-  if(i>=words.length){
-   isWordPlaying = false;
-   document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
-   return;
-  }
-
-  const u = new SpeechSynthesisUtterance(words[i]);
-  u.lang = "fr-FR";
- u.rate = (
- words[i].includes("point") ||
- words[i].includes("virgule")
-) ? 0.6 : 0.8;
-
-  i++;
-   u.onend = ()=>{
-   if(isWordPlaying){
-    setTimeout(speakNext, 400);
-   }
-  };
-
-  speechSynthesis.speak(u);
- }
-
- isWordPlaying = true;
- document.getElementById("wordBtn").innerText = "⏹️ Arrêter";
-
- speakNext();
-}
-  
+    
 function toggleSize(){
  largeMode=!largeMode;
  if(largeMode){
