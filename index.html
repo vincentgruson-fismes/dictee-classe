@@ -178,7 +178,7 @@ input{
 </div>
 
 <script>
-
+let currentWordIndex = 0;
  
  function resetHistory(){
  localStorage.removeItem("history");
@@ -421,7 +421,8 @@ doc.text(errors, 10, 40);
    
 
 let isWordPlaying = false;
-
+let currentWordIndex = 0;
+ 
 function toggleWordByWord(){
 
  speechSynthesis.cancel();
@@ -441,10 +442,11 @@ function toggleWordByWord(){
 
   if(currentWordIndex >= words.length){
    isWordPlaying = false;
-   currentWordIndex = 0;
+   currentWordIndex = 0; // reset uniquement à la fin
    document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
    return;
   }
+  
 const word = words[currentWordIndex];
 
   const u = new SpeechSynthesisUtterance(word);
@@ -535,11 +537,32 @@ let chunk = parts[i].trim();
  speakNext();
 }
 
- function togglePlay(){
-  const u = new SpeechSynthesisUtterance(modelText);
-  u.lang = "fr-FR";
-  speechSynthesis.speak(u);
+ let isPlaying = false;
+
+function togglePlay(){
+
+ speechSynthesis.cancel();
+
+ if(isPlaying){
+  isPlaying = false;
+  document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
+  return;
+ }
+
+ const u = new SpeechSynthesisUtterance(addPunctuationSpeech(modelText));
+ u.lang = "fr-FR";
+ u.rate = 0.75;
+ u.onend = ()=>{
+  isPlaying = false;
+  document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
+ };
+
+ speechSynthesis.speak(u);
+
+ isPlaying = true;
+ document.getElementById("playBtn").innerText = "⏹️ Arrêter";
 }
+ 
     
 function toggleSize(){
  largeMode=!largeMode;
