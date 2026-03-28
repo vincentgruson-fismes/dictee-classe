@@ -416,6 +416,10 @@ function toggleWordByWord(){
    document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
    return;
   }
+const word = words[currentWordIndex];
+
+  const u = new SpeechSynthesisUtterance(word);
+  u.lang = "fr-FR";
   
   u.rate = (
    word.includes("point") ||
