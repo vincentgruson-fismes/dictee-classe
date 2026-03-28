@@ -393,11 +393,6 @@ document.getElementById("hint").innerText=message;
 
   async function exportPDF(){
 
- if(!window.jspdf){
-  alert("PDF non chargé");
-  return;
- }
-
  const { jsPDF } = window.jspdf;
  const doc = new jsPDF(); // 🔴 IMPORTANT
 
@@ -425,9 +420,8 @@ let currentWordIndex = 0;
  
 function toggleWordByWord(){
 
- speechSynthesis.cancel();
-
- if(isWordPlaying){
+  if(isWordPlaying){
+  speechSynthesis.cancel();
   isWordPlaying = false;
   document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
   return;
@@ -442,7 +436,7 @@ function toggleWordByWord(){
 
   if(currentWordIndex >= words.length){
    isWordPlaying = false;
-   currentWordIndex = 0; // reset uniquement à la fin
+   currentWordIndex = 0; 
    document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
    return;
   }
