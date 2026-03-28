@@ -1,9 +1,10 @@
  <!DOCTYPE html>
 <html lang="fr">
 <head>
+  <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <meta charset="UTF-8">
 <title>Dictée autonome</title>
- <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
 <style>
 
 body{
@@ -415,10 +416,9 @@ doc.text(errors, 10, 40);
   doc.save(name + "_dictee.pdf");
 }
    
-
 let isWordPlaying = false;
- 
-function toggleWordByWord(){
+
+ function toggleWordByWord(){
 
   if(isWordPlaying){
   speechSynthesis.cancel();
