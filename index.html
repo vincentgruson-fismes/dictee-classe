@@ -124,6 +124,7 @@ input{
 </style>
 </head>
 <body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <div class="container">
 
 <h2>📚 Dictée autonome</h2>
@@ -157,7 +158,9 @@ input{
 <button id="wordBtn" onclick="toggleWordByWord()">🔤 Lire mot à mot</button>
 <button onclick="toggleSize()">🔠 Taille +</button>
 <textarea id="studentText" placeholder="Tape la dictée..."></textarea>
-<button onclick="checkText()">Vérifier</button>
+
+ <button onclick="checkText()">Vérifier</button>
+<button onclick="exportPDF()">📄 Export PDF</button> 
 <button onclick="resetHistory()">🧹 Réinitialiser</button>
 <div class="result" id="result"></div>
 <div id="score"></div>
@@ -387,7 +390,29 @@ box.classList.remove("hidden");
 
 document.getElementById("hint").innerText=message;
 }
+async function exportPDF(){
 
+ const { jsPDF } = window.jspdf;
+ const doc = new jsPDF();
+
+ const name = document.getElementById("studentName").value || "Élève";
+ const score = document.getElementById("score").innerText;
+ const errors = document.getElementById("errors").innerText;
+ const synthese = document.getElementById("synthese")?.innerText || "";
+
+ doc.text("Dictée - Résultats", 10, 10);
+ doc.text("Nom : " + name, 10, 20);
+ doc.text(score, 10, 30);
+ doc.text(errors, 10, 40);
+
+ let y = 50;
+ synthese.split("\n").forEach(line=>{
+  doc.text(line, 10, y);
+  y += 10;
+ });
+
+ doc.save(name + "_dictee.pdf");
+}
 let isWordPlaying = false;
 
 function toggleWordByWord(){
@@ -517,5 +542,6 @@ function toggleSize(){
 }
 
 </script>
+
 </body>
 </html>
