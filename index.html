@@ -501,7 +501,12 @@ let chunk = parts[i].trim();
 
  speakNext();
 }
-  
+
+ function togglePlay(){
+  const u = new SpeechSynthesisUtterance(modelText);
+  u.lang = "fr-FR";
+  speechSynthesis.speak(u);
+}
     
 function toggleSize(){
  largeMode=!largeMode;
