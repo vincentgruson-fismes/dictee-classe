@@ -480,10 +480,14 @@ let isWordPlaying = false;
   return;
  }
 
-speechSynthesis.cancel(); // 🔥 IMPORTANT
+ speechSynthesis.cancel();
 
-const words = addPunctuationSpeech(modelText).split(/\s+/);
-currentWordIndex = 0; // 🔥 reset propre
+ const words = addPunctuationSpeech(modelText).split(/\s+/);
+
+ // 🔥 NE PAS reset si on reprend
+ if(currentWordIndex >= words.length){
+  currentWordIndex = 0;
+ }
 
  function speakNext(){
 
@@ -491,7 +495,8 @@ currentWordIndex = 0; // 🔥 reset propre
 
   if(currentWordIndex >= words.length){
    isWordPlaying = false;
-     document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
+   currentWordIndex = 0; // reset seulement à la fin
+   document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
    return;
   }
 
@@ -503,15 +508,15 @@ currentWordIndex = 0; // 🔥 reset propre
   u.rate = (word.includes("point") || word.includes("virgule")) ? 0.6 : 0.8;
 
   u.onend = ()=>{
-   currentWordIndex++; // 🔥 on avance ici
-       setTimeout(speakNext, 500);
+   currentWordIndex++;
+   setTimeout(speakNext, 500);
   };
 
   u.onerror = ()=>{
-console.log("Erreur lecture mot :", word);
-currentWordIndex++;
-speakNext();
-};
+   console.log("Erreur lecture mot :", word);
+   currentWordIndex++;
+   speakNext();
+  };
 
   speechSynthesis.speak(u);
  }
@@ -521,7 +526,6 @@ speakNext();
 
  speakNext();
 }
-
   
 let isSlowPlaying = false;
 
