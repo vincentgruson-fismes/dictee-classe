@@ -79,8 +79,24 @@ input{
  line-height:1.8;
 }
 
-/* ERREURS */
-.error{
+/* ERREURS PAR TYPE */
+.error-homophone{
+ color:#1d4ed8;
+ background:#bfdbfe;
+ padding:4px 6px;
+ border-radius:6px;
+ font-weight:bold;
+}
+
+.error-accord{
+ color:#065f46;
+ background:#bbf7d0;
+ padding:4px 6px;
+ border-radius:6px;
+ font-weight:bold;
+}
+
+.error-vocab{
  color:#b91c1c;
  background:#fecaca;
  padding:4px 6px;
@@ -276,37 +292,39 @@ function detectHint(w, exp){
  w=w.toLowerCase(); 
  exp=(exp||"").toLowerCase();
 
+ // HOMOPHONES
  if((w==="a"||w==="à")&&(exp==="a"||exp==="à")){
   errorStats.homophones++;
-  return "avait";
+  return {hint:"avait", type:"homophone"};
  }
 
  if((w==="et"||w==="est")&&(exp==="et"||exp==="est")){
   errorStats.homophones++;
-  return "était";
+  return {hint:"était", type:"homophone"};
  }
 
  if((w==="on"||w==="ont")&&(exp==="on"||exp==="ont")){
   errorStats.homophones++;
-  return "avaient";
+  return {hint:"avaient", type:"homophone"};
  }
 
  if((w==="son"||w==="sont")&&(exp==="son"||exp==="sont")){
   errorStats.homophones++;
-  return "étaient";
+  return {hint:"étaient", type:"homophone"};
  }
 
- // accord simple pluriel
+ // ACCORD
  if(exp.endsWith("s") && !w.endsWith("s")){
   errorStats.accords++;
-  return "pluriel";
+  return {hint:"pluriel", type:"accord"};
  }
 
- // sinon vocabulaire
+ // VOCABULAIRE
  errorStats.vocabulaire++;
- return "";
+ return {hint:"", type:"vocab"};
 }
 
+ 
 function checkText(){
 errorStats = {homophones:0, accords:0, vocabulaire:0};
   const student = tokenize(document.getElementById("studentText").value);
@@ -324,9 +342,17 @@ res+=student[i]+" ";
 correct++;
 }else{
 errors++;
-const h=detectHint(student[i],model[i]);
-hints[i]=h;
-res+=`<span class='error' onclick='showHint(${i})'>${student[i]}</span> `;
+const result = detectHint(student[i],model[i]);
+
+hints[i] = result.hint;
+
+let cssClass = "";
+
+if(result.type === "homophone") cssClass = "error-homophone";
+else if(result.type === "accord") cssClass = "error-accord";
+else cssClass = "error-vocab";
+
+res += `<span class='${cssClass}' onclick='showHint(${i})'>${student[i]}</span> `;
 }
 }
 
