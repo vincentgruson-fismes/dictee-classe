@@ -488,66 +488,64 @@ let isWordPlaying = false;
 let isSlowPlaying = false;
 
 function playDictationSlow(){
-speechSynthesis.cancel();
+
  const btn = document.getElementById("slowBtn");
 
- // 🔴 si on arrête
  if(isSlowPlaying){
   speechSynthesis.cancel();
   isSlowPlaying = false;
-  btn.innerText = "📝 Mode dictée réelle";
+  btn.innerText = "▶️ Reprendre dictée";
   return;
  }
 
- speechSynthesis.cancel();
- isSlowPlaying = true;
- btn.innerText = "⏹️ Arrêter";
-
- // ajouter la ponctuation parlée
  const text = addPunctuationSpeech(modelText);
 
- // découper intelligemment
  const parts = text.split(/(?<=point|virgule|point d'interrogation|point d'exclamation)/);
-
- let i = 0;
 
  function speakNext(){
 
   if(!isSlowPlaying) return;
 
-  if(i >= parts.length){
+  if(slowIndex >= parts.length){
    isSlowPlaying = false;
+   slowIndex = 0; // reset uniquement à la fin
    btn.innerText = "📝 Mode dictée réelle";
    return;
   }
-let chunk = parts[i].trim();
-  i++;
+
+  let chunk = parts[slowIndex].trim();
 
   if(chunk === ""){
+   slowIndex++;
    speakNext();
    return;
   }
 
   const u = new SpeechSynthesisUtterance(chunk);
   u.voice = getFrenchVoice();
-  u.rate = 0.65;
+  u.rate = 0.7;
 
   u.onend = () => {
+
+   slowIndex++; // 🔥 avance ici
+
    let delay =
     chunk.includes("point") ? 900 :
     chunk.includes("virgule") ? 500 :
-     200;
+    300;
 
    setTimeout(speakNext, delay);
   };
 
   u.onerror = () => {
- isSlowPlaying = false;
- btn.innerText = "📝 Mode dictée réelle";
-};
+   isSlowPlaying = false;
+  };
 
   speechSynthesis.speak(u);
  }
+
+ isSlowPlaying = true;
+ btn.innerText = "⏸ Pause";
 
  speakNext();
 }
