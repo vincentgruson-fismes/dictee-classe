@@ -345,13 +345,13 @@ function detectHint(w, exp){
  exp = (exp || "").toLowerCase();
 
 // 🔥 VERBES
-if(teacherVerbs.includes(exp)){
+if(teacherVerbs.some(v => exp.startsWith(v))){
  errorStats.verbes = (errorStats.verbes || 0) + 1;
  return {hint:"verbe", type:"verbe"};
 }
 
 // 🔥 VOCABULAIRE
-if(teacherVocab.includes(exp)){
+if(teacherVocab.some(v => exp.includes(v))){
  errorStats.vocabulaire++;
  return {hint:"vocabulaire", type:"vocabulaire"};
 }
@@ -466,18 +466,18 @@ clicks[i]++;
 let h=hints[i];
 let message="";
 
- // 🔥 VERBE (liste enseignant)
- if(h === "verbe"){
+ // 🔥 VERBE
+if(h === "verbe"){
  message = "Réfléchis si ce mot est un verbe en utilisant les techniques ROTI. Si c'est un verbe, vérifie la terminaison.";
 }
 
-  // 🔥 VOCABULAIRE (liste enseignant)
+// 🔥 VOCABULAIRE
 else if(h === "vocabulaire"){
  message = "Vérifie dans ta liste de vocabulaire que tu devais apprendre.";
 }
- 
+
 // HOMOPHONES
-if(h==="avait"||h==="était"||h==="avaient"||h==="étaient"){
+else if(h==="avait"||h==="était"||h==="avaient"||h==="étaient"){
  if(clicks[i]===1){
   message="Peux-tu remplacer par '"+h+"' ?";
  }else{
@@ -491,7 +491,7 @@ if(h==="avait"||h==="était"||h==="avaient"||h==="étaient"){
 // PLURIEL
 else if(h==="pluriel"){
  if(clicks[i]===1){
-  message="C'est peut-être un groupe nominal, regarde le déterminant pour savoir comment on accorde.";
+  message="C'est peut-être un groupe nominal, regarde le déterminant.";
  }else{
   message="Tu as fait une erreur de pluriel.";
  }
