@@ -249,7 +249,18 @@ const params = new URLSearchParams(window.location.search);
 if(params.get("text")){
  modelText = decodeURIComponent(params.get("text"));
 }
+if(params.get("verbs")){
+ teacherVerbs = decodeURIComponent(params.get("verbs"))
+  .split(",")
+  .map(v => v.trim().toLowerCase());
+}
 
+if(params.get("vocab")){
+ teacherVocab = decodeURIComponent(params.get("vocab"))
+  .split(",")
+  .map(v => v.trim().toLowerCase());
+}
+ 
 function showTeacher(){
 document.getElementById("home").classList.add("hidden");
 document.getElementById("teacher").classList.remove("hidden");
@@ -313,8 +324,20 @@ function tokenize(text){
 }
 
 function detectHint(w, exp){
- w=w.toLowerCase(); 
- exp=(exp||"").toLowerCase();
+ w = w.toLowerCase(); 
+ exp = (exp || "").toLowerCase();
+
+ // 🔥 VERBES
+ if(teacherVerbs.includes(exp)){
+  errorStats.vocabulaire++;
+  return {hint:"C'est un verbe à bien orthographier.", type:"vocab"};
+ }
+
+ // 🔥 VOCABULAIRE CIBLÉ
+ if(teacherVocab.includes(exp)){
+  errorStats.vocabulaire++;
+  return {hint:"Mot à apprendre.", type:"vocab"};
+ }
 
  // HOMOPHONES
  if((w==="a"||w==="à")&&(exp==="a"||exp==="à")){
