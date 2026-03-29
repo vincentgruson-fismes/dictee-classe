@@ -197,6 +197,7 @@ input{
 
 <script>
 
+ speechSynthesis.cancel();
  window.speechSynthesis.onvoiceschanged = () => {
  speechSynthesis.getVoices();
 };
@@ -588,7 +589,8 @@ for(let i=0; i<parts.length; i++){
  speechSynthesis.cancel(); // 🔥 évite blocage
  speakNext();
 }, delay);
-
+ };
+  
   u.onerror = () => {
    isSlowPlaying = false;
   };
