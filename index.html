@@ -574,29 +574,59 @@ box.classList.remove("hidden");
 document.getElementById("hint").innerText=message;
 }
 
-  async function exportPDF(){
+ async function exportPDF(){
 
  const { jsPDF } = window.jspdf;
- const doc = new jsPDF(); // 🔴 IMPORTANT
+ const doc = new jsPDF();
 
  const name = document.getElementById("studentName").value || "Élève";
  const score = document.getElementById("score").innerText;
  const errors = document.getElementById("errors").innerText;
  const synthese = document.getElementById("synthese")?.innerText || "";
+ const studentText = document.getElementById("studentText").value;
 
- doc.text("Dictée - Résultats", 10, 10);
- doc.text("Nom : " + name, 10, 20);
- doc.text(score, 10, 30);
-doc.text(errors, 10, 40);
+ let y = 10;
 
- let y = 50;
+ doc.setFontSize(14);
+ doc.text("Dictée - Résultats", 10, y);
+
+ y += 10;
+ doc.setFontSize(12);
+ doc.text("Nom : " + name, 10, y);
+
+ y += 10;
+ doc.text(score, 10, y);
+
+ y += 10;
+ doc.text(errors, 10, y);
+
+ y += 10;
+
+ // 🔥 SYNTHÈSE
  synthese.split("\n").forEach(line=>{
   doc.text(line, 10, y);
-  y += 10;
+  y += 8;
  });
-  doc.save(name + "_dictee.pdf");
-}
 
+ y += 5;
+
+ // 🔥 TEXTE ÉLÈVE
+ doc.text("Texte de l'élève :", 10, y);
+ y += 8;
+
+ const lines = doc.splitTextToSize(studentText, 180);
+
+ lines.forEach(line=>{
+  if(y > 280){
+   doc.addPage();
+   y = 10;
+  }
+  doc.text(line, 10, y);
+  y += 8;
+ });
+
+ doc.save(name + "_dictee.pdf");
+}
 
  function getFrenchVoice(){
  const voices = speechSynthesis.getVoices();
@@ -717,16 +747,16 @@ for(let i=0; i<parts.length; i++){
 
   const u = new SpeechSynthesisUtterance(chunk);
   u.voice = getFrenchVoice();
-  u.rate = 0.7;
+  u.rate = 0.5;
 
   u.onend = () => {
 
    slowIndex++; // 🔥 avance ici
 
    let delay =
-    chunk.includes("point") ? 900 :
-    chunk.includes("virgule") ? 500 :
-    300;
+    chunk.includes("point") ? 1800 :
+    chunk.includes("virgule") ? 1000 :
+    800;
 
    setTimeout(() => {
  speechSynthesis.cancel(); // 🔥 évite blocage
