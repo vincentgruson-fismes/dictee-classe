@@ -84,7 +84,13 @@ input{
 }
 
 /* ERREURS PAR TYPE */
-.error-verbe{
+.error-missing{
+ background:#fef3c7;
+ color:#92400e;
+ font-weight:bold;
+}
+ 
+ .error-verbe{
  color:#7c3aed;
  background:#ddd6fe;
  padding:4px 6px;
@@ -342,7 +348,8 @@ function generateLink(){
 function tokenize(text){
  return text
   .toLowerCase()
-  .replace(/[.,!?;:]/g, "") // 🔥 enlève ponctuation
+  .replace(/([.,!?;:])/g, " $1 ")
+  .replace(/[.,!?;:]/g, "")
   .trim()
   .split(/\s+/);
 }
@@ -451,26 +458,53 @@ hints={}; clicks={};
 let correct=0;
 let errors=0;
 
-for(let i=0;i<student.length;i++){
-if(student[i]===model[i]){
-res+=student[i]+" ";
-correct++;
-}else{
-errors++;
-const result = detectHint(student[i],model[i]);
+let i = 0;
+let j = 0;
 
-hints[i] = result.hint;
+while(i < student.length || j < model.length){
 
-let cssClass = "";
+ // ✅ mot correct
+ if(student[i] === model[j]){
+  res += student[i] + " ";
+  correct++;
+  i++;
+  j++;
+ }
 
-if(result.type === "homophone") cssClass = "error-homophone";
-else if(result.type === "accord") cssClass = "error-accord";
-else if(result.type === "verbe") cssClass = "error-verbe";
-else if(result.type === "vocabulaire") cssClass = "error-vocabulaire";
-else cssClass = "error-vocab";
-
-res += `<span class='${cssClass}' onclick='showHint(${i})'>${student[i]}</span> `;
+ // 🔥 mot oublié (dans le modèle)
+ else if(student[i] === model[j+1]){
+ res += `<span class='error-missing'>[mot oublié]</span> `;
+ errors++;
+ j++;
 }
+
+ // 🔥 mot en trop (élève)
+ else if(student[i+1] === model[j]){
+  res += `<span class='error-vocabulaire'>${student[i]}</span> `;
+  errors++;
+  i++;
+ }
+
+ // 🔥 vraie erreur
+ else{
+  errors++;
+  const result = detectHint(student[i], model[j]);
+
+  hints[i] = result.hint;
+
+  let cssClass = "";
+
+  if(result.type === "homophone") cssClass = "error-homophone";
+  else if(result.type === "accord") cssClass = "error-accord";
+  else if(result.type === "verbe") cssClass = "error-verbe";
+  else if(result.type === "vocabulaire") cssClass = "error-vocabulaire";
+  else cssClass = "error-vocab";
+
+  res += `<span class='${cssClass}' onclick='showHint(${i})'>${student[i]}</span> `;
+
+  i++;
+  j++;
+ }
 }
 
 let score = model.length ? Math.round((correct/model.length)*100) : 0;
@@ -793,7 +827,7 @@ function togglePlay(){
  const text = addPunctuationSpeech(modelText);
  const u = new SpeechSynthesisUtterance(text);
  u.voice = getFrenchVoice();
- u.rate = 0.65;
+ u.rate = 0.4;
  u.onend = ()=>{
   isPlaying = false;
   document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
