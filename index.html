@@ -84,7 +84,23 @@ input{
 }
 
 /* ERREURS PAR TYPE */
-.error-homophone{
+.error-verbe{
+ color:#7c3aed;
+ background:#ddd6fe;
+ padding:4px 6px;
+ border-radius:6px;
+ font-weight:bold;
+}
+
+.error-vocabulaire{
+ color:#b91c1c;
+ background:#fecaca;
+ padding:4px 6px;
+ border-radius:6px;
+ font-weight:bold;
+}
+ 
+ .error-homophone{
  color:#1d4ed8;
  background:#bfdbfe;
  padding:4px 6px;
@@ -235,10 +251,11 @@ let teacherVocab = [];
   .replace(/;/g, " point-virgule ");
 }
   
-  let errorStats = {
+ let errorStats = {
  homophones:0,
  accords:0,
- vocabulaire:0
+ vocabulaire:0,
+ verbes:0
 };
 let modelText = "";
 let hints = {};
@@ -327,16 +344,16 @@ function detectHint(w, exp){
  w = w.toLowerCase(); 
  exp = (exp || "").toLowerCase();
 
- // 🔥 VERBES
+// 🔥 VERBES
 if(teacherVerbs.includes(exp)){
- errorStats.vocabulaire++;
+ errorStats.verbes = (errorStats.verbes || 0) + 1;
  return {hint:"verbe", type:"verbe"};
 }
- 
- // 🔥 VOCABULAIRE CIBLÉ
+
+// 🔥 VOCABULAIRE
 if(teacherVocab.includes(exp)){
  errorStats.vocabulaire++;
- return {hint:"vocabulaire", type:"vocab"};
+ return {hint:"vocabulaire", type:"vocabulaire"};
 }
 
  // HOMOPHONES
@@ -373,7 +390,7 @@ if(teacherVocab.includes(exp)){
 
  
 function checkText(){
-errorStats = {homophones:0, accords:0, vocabulaire:0};
+errorStats = {homophones:0, accords:0, vocabulaire:0, verbes:0};
   const student = tokenize(document.getElementById("studentText").value);
 const model = tokenize(modelText);
 
@@ -397,6 +414,8 @@ let cssClass = "";
 
 if(result.type === "homophone") cssClass = "error-homophone";
 else if(result.type === "accord") cssClass = "error-accord";
+else if(result.type === "verbe") cssClass = "error-verbe";
+else if(result.type === "vocabulaire") cssClass = "error-vocabulaire";
 else cssClass = "error-vocab";
 
 res += `<span class='${cssClass}' onclick='showHint(${i})'>${student[i]}</span> `;
@@ -422,9 +441,10 @@ history.forEach((e,i)=>{
 document.getElementById("history").innerText = historyText;
 let synthese = `
 Synthèse :
+Verbes : ${errorStats.verbes}
+Vocabulaire : ${errorStats.vocabulaire}
 Homophones : ${errorStats.homophones}
 Accords : ${errorStats.accords}
-Vocabulaire : ${errorStats.vocabulaire}
 `;
 
 let synthDiv = document.getElementById("synthese");
