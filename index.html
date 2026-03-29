@@ -425,60 +425,61 @@ doc.text(errors, 10, 40);
  });
   doc.save(name + "_dictee.pdf");
 }
-   
+
+
+ function getFrenchVoice(){
+ const voices = speechSynthesis.getVoices();
+
+ // essaie voix de meilleure qualité
+ return voices.find(v => 
+  v.lang.includes("fr") && 
+  (v.name.includes("Google") || v.name.includes("Microsoft"))
+ ) || voices.find(v => v.lang.includes("fr"));
+}
+ 
 let isWordPlaying = false;
 
  function toggleWordByWord(){
 
-  currentWordIndex = 0;
-speechSynthesis.cancel();
-  if(isWordPlaying){
+ if(isWordPlaying){
   speechSynthesis.cancel();
   isWordPlaying = false;
-  document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
+  document.getElementById("wordBtn").innerText = "▶️ Reprendre";
   return;
  }
 
-  const words = addPunctuationSpeech(modelText).split(/\s+/);
- 
+ const words = addPunctuationSpeech(modelText).split(/\s+/);
+
  function speakNext(){
 
   if(!isWordPlaying) return;
 
   if(currentWordIndex >= words.length){
    isWordPlaying = false;
-   currentWordIndex = 0; 
+   currentWordIndex = 0; // reset uniquement à la fin
    document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
    return;
   }
-  
-const word = words[currentWordIndex];
+
+  const word = words[currentWordIndex];
 
   const u = new SpeechSynthesisUtterance(word);
-  u.lang = "fr-FR";
-  
-  u.rate = (
-   word.includes("point") ||
-   word.includes("virgule")
-  ) ? 0.6 : 0.8;
+  u.voice = getFrenchVoice();
 
-  currentWordIndex++;
+  u.rate = (word.includes("point") || word.includes("virgule")) ? 0.6 : 0.8;
 
   u.onend = ()=>{
- if(isWordPlaying){
-  setTimeout(speakNext, 300);
- }
-};
-
-u.onerror = ()=>{
- isWordPlaying = false;
-};
+   currentWordIndex++; // 🔥 on avance ici
+   if(isWordPlaying){
+    setTimeout(speakNext, 400);
+   }
+  };
 
   speechSynthesis.speak(u);
-}
+ }
 
  isWordPlaying = true;
- document.getElementById("wordBtn").innerText = "⏹️ Arrêter";
+ document.getElementById("wordBtn").innerText = "⏹️ Pause";
 
  speakNext();
 }
@@ -528,7 +529,7 @@ let chunk = parts[i].trim();
   }
 
   const u = new SpeechSynthesisUtterance(chunk);
-  u.lang = "fr-FR";
+  u.voice = getFrenchVoice();
   u.rate = 0.65;
 
   u.onend = () => {
@@ -565,8 +566,8 @@ function togglePlay(){
 
  const text = addPunctuationSpeech(modelText);
  const u = new SpeechSynthesisUtterance(text);
- u.lang = "fr-FR";
- u.rate = 0.75;
+ u.voice = getFrenchVoice();
+ u.rate = 0.65;
  u.onend = ()=>{
   isPlaying = false;
   document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
