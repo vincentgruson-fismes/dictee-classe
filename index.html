@@ -340,14 +340,56 @@ function tokenize(text){
   .split(/\s+/);
 }
 
+function detectVerbeErreur(w, exp){
+
+ // mêmes mots → pas d'erreur
+ if(w === exp) return null;
+
+ // 🔥 ER / É
+ if((w.endsWith("er") && exp.endsWith("é")) ||
+    (w.endsWith("é") && exp.endsWith("er"))){
+  return "er_é";
+ }
+
+ // 🔥 IMPARFAIT (ait / aient)
+ if((w.endsWith("ait") && exp.endsWith("aient")) ||
+    (w.endsWith("aient") && exp.endsWith("ait"))){
+  return "imparfait";
+ }
+
+ // 🔥 PRESENT (e / es / ent)
+ if((w.endsWith("e") || w.endsWith("es")) && exp.endsWith("ent")){
+  return "present";
+ }
+
+ // 🔥 NOUS (ons)
+ if(!w.endsWith("ons") && exp.endsWith("ons")){
+  return "nous";
+ }
+
+ // 🔥 VOUS (ez)
+ if(!w.endsWith("ez") && exp.endsWith("ez")){
+  return "vous";
+ }
+
+ return "verbe"; // fallback
+}
+ 
 function detectHint(w, exp){
  w = w.toLowerCase(); 
  exp = (exp || "").toLowerCase();
 
 // 🔥 VERBES
 if(teacherVerbs.some(v => exp.startsWith(v))){
- errorStats.verbes = (errorStats.verbes || 0) + 1;
- return {hint:"verbe", type:"verbe"};
+
+ let typeErreur = detectVerbeErreur(w, exp);
+
+ errorStats.verbes++;
+
+ return {
+  hint: typeErreur,
+  type: "verbe"
+ };
 }
 
 // 🔥 VOCABULAIRE
@@ -467,8 +509,23 @@ let h=hints[i];
 let message="";
 
  // 🔥 VERBE
-if(h === "verbe"){
- message = "Réfléchis si ce mot est un verbe en utilisant les techniques ROTI. Si c'est un verbe, vérifie la terminaison.";
+if(h === "er_é"){
+ message = "Verbe : remplace par 'prendre' ou 'prendre' au passé → on entend quoi ?";
+}
+else if(h === "imparfait"){
+ message = "Verbe à l'imparfait : pense à 'il/ils ...ait / ...aient'.";
+}
+else if(h === "present"){
+ message = "Verbe au présent : avec 'ils', la terminaison est souvent -ent.";
+}
+else if(h === "nous"){
+ message = "Avec 'nous', le verbe se termine par -ons.";
+}
+else if(h === "vous"){
+ message = "Avec 'vous', le verbe se termine par -ez.";
+}
+else if(h === "verbe"){
+ message = "Réfléchis si c'est un verbe et vérifie la terminaison.";
 }
 
 // 🔥 VOCABULAIRE
