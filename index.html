@@ -263,7 +263,11 @@ document.getElementById("qrContainer").innerHTML = "<div><b>QR code élèves :</
 }
 
 function tokenize(text){
-return text.trim().split(/\s+/);
+ return text
+  .toLowerCase()
+  .replace(/[.,!?;:]/g, "") // 🔥 enlève ponctuation
+  .trim()
+  .split(/\s+/);
 }
 
 function detectHint(w, exp){
@@ -426,6 +430,8 @@ let isWordPlaying = false;
 
  function toggleWordByWord(){
 
+  currentWordIndex = 0;
+speechSynthesis.cancel();
   if(isWordPlaying){
   speechSynthesis.cancel();
   isWordPlaying = false;
@@ -459,10 +465,14 @@ const word = words[currentWordIndex];
   currentWordIndex++;
 
   u.onend = ()=>{
-   if(isWordPlaying){
-    setTimeout(speakNext, 400);
-   }
-  };
+ if(isWordPlaying){
+  setTimeout(speakNext, 300);
+ }
+};
+
+u.onerror = ()=>{
+ isWordPlaying = false;
+};
 
   speechSynthesis.speak(u);
 }
@@ -496,7 +506,7 @@ speechSynthesis.cancel();
  const text = addPunctuationSpeech(modelText);
 
  // découper intelligemment
- const parts = text.split(/(point|virgule|point d'interrogation|point d'exclamation)/);
+ const parts = text.split(/(?<=point|virgule|point d'interrogation|point d'exclamation)/);
 
  let i = 0;
 
@@ -530,6 +540,11 @@ let chunk = parts[i].trim();
    setTimeout(speakNext, delay);
   };
 
+  u.onerror = () => {
+ isSlowPlaying = false;
+ btn.innerText = "📝 Mode dictée réelle";
+};
+
   speechSynthesis.speak(u);
  }
 
@@ -548,7 +563,8 @@ function togglePlay(){
   return;
  }
 
- const u = new SpeechSynthesisUtterance(addPunctuationSpeech(modelText));
+ const text = addPunctuationSpeech(modelText);
+ const u = new SpeechSynthesisUtterance(text);
  u.lang = "fr-FR";
  u.rate = 0.75;
  u.onend = ()=>{
@@ -556,6 +572,9 @@ function togglePlay(){
   document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
  };
 
+ u.onerror = () => {
+  isPlaying = false;
+ };
  speechSynthesis.speak(u);
 
  isPlaying = true;
