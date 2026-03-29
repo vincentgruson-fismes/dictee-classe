@@ -180,7 +180,8 @@ input{
 </div>
 
 <script>
-var currentWordIndex = 0;
+speechSynthesis.onvoiceschanged = () => {};
+ var currentWordIndex = 0;
  var slowIndex = 0;
  
  function resetHistory(){
@@ -520,12 +521,12 @@ for(let i=0; i<parts.length; i++){
 
   if(!isSlowPlaying) return;
 
- if(slowIndex >= rebuilt.length)
+ if(slowIndex >= rebuilt.length){
    isSlowPlaying = false;
-   slowIndex = 0; // reset uniquement à la fin
+   slowIndex = 0;
    btn.innerText = "📝 Mode dictée réelle";
    return;
-  }
+}
 
   let chunk = rebuilt[slowIndex].trim();
 
@@ -558,6 +559,7 @@ for(let i=0; i<parts.length; i++){
   speechSynthesis.speak(u);
  }
 
+ speechSynthesis.cancel();
  isSlowPlaying = true;
  btn.innerText = "⏸ Pause";
 
