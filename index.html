@@ -328,16 +328,16 @@ function detectHint(w, exp){
  exp = (exp || "").toLowerCase();
 
  // 🔥 VERBES
- if(teacherVerbs.includes(exp)){
-  errorStats.vocabulaire++;
-  return {hint:"C'est un verbe à bien orthographier.", type:"vocab"};
- }
-
+if(teacherVerbs.includes(exp)){
+ errorStats.vocabulaire++;
+ return {hint:"verbe", type:"verbe"};
+}
+ 
  // 🔥 VOCABULAIRE CIBLÉ
- if(teacherVocab.includes(exp)){
-  errorStats.vocabulaire++;
-  return {hint:"Mot à apprendre.", type:"vocab"};
- }
+if(teacherVocab.includes(exp)){
+ errorStats.vocabulaire++;
+ return {hint:"vocabulaire", type:"vocab"};
+}
 
  // HOMOPHONES
  if((w==="a"||w==="à")&&(exp==="a"||exp==="à")){
@@ -446,6 +446,16 @@ clicks[i]++;
 let h=hints[i];
 let message="";
 
+ // 🔥 VERBE (liste enseignant)
+ if(h === "verbe"){
+ message = "Réfléchis si ce mot est un verbe en utilisant les techniques ROTI. Si c'est un verbe, vérifie la terminaison.";
+}
+
+  // 🔥 VOCABULAIRE (liste enseignant)
+else if(h === "vocabulaire"){
+ message = "Vérifie dans ta liste de vocabulaire que tu devais apprendre.";
+}
+ 
 // HOMOPHONES
 if(h==="avait"||h==="était"||h==="avaient"||h==="étaient"){
  if(clicks[i]===1){
