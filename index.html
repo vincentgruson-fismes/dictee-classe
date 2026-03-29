@@ -340,6 +340,11 @@ function tokenize(text){
   .split(/\s+/);
 }
 
+function getRadical(word){
+ return word
+  .replace(/(ent|ait|aient|er|é|ez|ons|e|es)$/,"");
+}
+ 
 function detectVerbeErreur(w, exp){
 
  // mêmes mots → pas d'erreur
@@ -380,12 +385,9 @@ function detectHint(w, exp){
  exp = (exp || "").toLowerCase();
 
 // 🔥 VERBES
-if(teacherVerbs.some(v => exp.startsWith(v))){
-
+if(teacherVerbs.some(v => getRadical(exp) === getRadical(v))){
  let typeErreur = detectVerbeErreur(w, exp);
-
  errorStats.verbes++;
-
  return {
   hint: typeErreur,
   type: "verbe"
