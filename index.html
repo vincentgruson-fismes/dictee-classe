@@ -181,6 +181,7 @@ input{
 
 <script>
 var currentWordIndex = 0;
+ var slowIndex = 0;
  
  function resetHistory(){
  localStorage.removeItem("history");
@@ -500,20 +501,33 @@ function playDictationSlow(){
 
  const text = addPunctuationSpeech(modelText);
 
- const parts = text.split(/(?<=point|virgule|point d'interrogation|point d'exclamation)/);
+ const parts = text.split(/(point|virgule|point d'interrogation|point d'exclamation)/);
+ // reconstruire les morceaux correctement
+let rebuilt = [];
+for(let i=0; i<parts.length; i++){
+ if(parts[i].trim() === "") continue;
 
+ if(["point","virgule","point d'interrogation","point d'exclamation"].includes(parts[i])){
+  if(rebuilt.length > 0){
+   rebuilt[rebuilt.length - 1] += " " + parts[i];
+  }
+ } else {
+  rebuilt.push(parts[i]);
+ }
+}
+ 
  function speakNext(){
 
   if(!isSlowPlaying) return;
 
-  if(slowIndex >= parts.length){
+ if(slowIndex >= rebuilt.length)
    isSlowPlaying = false;
    slowIndex = 0; // reset uniquement à la fin
    btn.innerText = "📝 Mode dictée réelle";
    return;
   }
 
-  let chunk = parts[slowIndex].trim();
+  let chunk = rebuilt[slowIndex].trim();
 
   if(chunk === ""){
    slowIndex++;
