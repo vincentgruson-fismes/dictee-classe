@@ -89,6 +89,14 @@ input{
  color:#92400e;
  font-weight:bold;
 }
+
+.error-fusion{
+ background:#fde68a;
+ color:#92400e;
+ padding:4px 6px;
+ border-radius:6px;
+ font-weight:bold;
+}
  
  .error-verbe{
  color:#7c3aed;
@@ -485,6 +493,23 @@ while(i < student.length || j < model.length){
   i++;
  }
 
+// 🔥 MOT FUSIONNÉ (ICI 👇)
+else if(student[i] === model[j] + model[j+1]){
+ hints[i] = "fusion";
+ res += `<span class='error-fusion' onclick='showHint(${i})'>${student[i]}</span> `;
+ errors++;
+ i++;
+ j += 2;
+}
+
+// 🔥 MOT COUPÉ (ex: "le chat" → "lechat" attendu)
+else if(student[i] + student[i+1] === model[j]){
+ res += `<span class='error-fusion'>${student[i]} ${student[i+1]}</span> `;
+ errors++;
+ i += 2;
+ j++;
+}
+ 
  // 🔥 vraie erreur
  else{
   errors++;
@@ -576,6 +601,10 @@ else if(h === "vocabulaire"){
  message = "Vérifie dans ta liste de vocabulaire que tu devais apprendre.";
 }
 
+else if(h === "fusion"){
+ message = "Attention : tu dois séparer les mots.";
+}
+ 
 // HOMOPHONES
 else if(h==="avait"||h==="était"||h==="avaient"||h==="étaient"){
  if(clicks[i]===1){
