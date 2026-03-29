@@ -243,6 +243,13 @@ let teacherVocab = [];
   
   function addPunctuationSpeech(text){
  return text
+  // 🔥 remplace caractères problématiques
+  .replace(/à/g, "a")
+  .replace(/é/g, "é") // ok
+  .replace(/è/g, "è")
+  .replace(/ê/g, "è")
+
+  // ponctuation
   .replace(/\./g, " point ")
   .replace(/,/g, " virgule ")
   .replace(/\?/g, " point d'interrogation ")
@@ -394,12 +401,6 @@ if(teacherVerbs.some(v => getRadical(exp) === getRadical(v))){
  };
 }
 
-// 🔥 VOCABULAIRE
-if(teacherVocab.some(v => exp.includes(v))){
- errorStats.vocabulaire++;
- return {hint:"vocabulaire", type:"vocabulaire"};
-}
-
  // HOMOPHONES
  if((w==="a"||w==="à")&&(exp==="a"||exp==="à")){
   errorStats.homophones++;
@@ -427,7 +428,13 @@ if(teacherVocab.some(v => exp.includes(v))){
   return {hint:"pluriel", type:"accord"};
  }
 
- // VOCABULAIRE
+// 🔥 VOCABULAIRE
+if(teacherVocab.some(v => exp.includes(v))){
+ errorStats.vocabulaire++;
+ return {hint:"vocabulaire", type:"vocabulaire"};
+}
+ 
+ // default
  errorStats.vocabulaire++;
  return {hint:"", type:"vocab"};
 }
