@@ -196,8 +196,11 @@ input{
 </div>
 
 <script>
-speechSynthesis.onvoiceschanged = () => {};
- var currentWordIndex = 0;
+
+ window.speechSynthesis.onvoiceschanged = () => {
+ speechSynthesis.getVoices();
+};
+  var currentWordIndex = 0;
  var slowIndex = 0;
  
  function resetHistory(){
@@ -458,11 +461,11 @@ doc.text(errors, 10, 40);
  function getFrenchVoice(){
  const voices = speechSynthesis.getVoices();
 
- // essaie voix de meilleure qualité
- return voices.find(v => 
-  v.lang.includes("fr") && 
-  (v.name.includes("Google") || v.name.includes("Microsoft"))
- ) || voices.find(v => v.lang.includes("fr"));
+ if(!voices.length){
+  return null; // évite crash
+ }
+
+ return voices.find(v => v.lang.includes("fr")) || voices[0];
 }
  
 let isWordPlaying = false;
@@ -476,7 +479,10 @@ let isWordPlaying = false;
   return;
  }
 
- const words = addPunctuationSpeech(modelText).split(/\s+/);
+speechSynthesis.cancel(); // 🔥 IMPORTANT
+
+const words = addPunctuationSpeech(modelText).split(/\s+/);
+currentWordIndex = 0; // 🔥 reset propre
 
  function speakNext(){
 
@@ -484,8 +490,7 @@ let isWordPlaying = false;
 
   if(currentWordIndex >= words.length){
    isWordPlaying = false;
-   currentWordIndex = 0; // reset uniquement à la fin
-   document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
+     document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
    return;
   }
 
@@ -498,10 +503,14 @@ let isWordPlaying = false;
 
   u.onend = ()=>{
    currentWordIndex++; // 🔥 on avance ici
-   if(isWordPlaying){
-    setTimeout(speakNext, 400);
-   }
+       setTimeout(speakNext, 500);
   };
+
+  u.onerror = ()=>{
+console.log("Erreur lecture mot :", word);
+currentWordIndex++;
+speakNext();
+};
 
   speechSynthesis.speak(u);
  }
@@ -575,8 +584,10 @@ for(let i=0; i<parts.length; i++){
     chunk.includes("virgule") ? 500 :
     300;
 
-   setTimeout(speakNext, delay);
-  };
+   setTimeout(() => {
+ speechSynthesis.cancel(); // 🔥 évite blocage
+ speakNext();
+}, delay);
 
   u.onerror = () => {
    isSlowPlaying = false;
