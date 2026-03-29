@@ -220,8 +220,14 @@ document.getElementById("teacher").classList.remove("hidden");
 }
 
 function showStudent(){
-document.getElementById("home").classList.add("hidden");
-document.getElementById("student").classList.remove("hidden");
+ document.getElementById("home").classList.add("hidden");
+ document.getElementById("student").classList.remove("hidden");
+
+ // 🔥 récupérer la dictée enseignant
+ const text = document.getElementById("teacherText").value;
+ if(text){
+  modelText = text;
+ }
 }
 
 function backHome(){
@@ -427,8 +433,7 @@ let isWordPlaying = false;
   return;
  }
 
-  const words = addPunctuationSpeech(modelText)
- .match(/point d'interrogation|point d'exclamation|point|virgule|[^\s]+/g) || [];
+  const words = addPunctuationSpeech(modelText).split(/\s+/);
  
  function speakNext(){
 
