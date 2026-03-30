@@ -46,7 +46,21 @@ textarea{
 
  
 /* BOUTONS TABLETTE */
-button{
+#modeBadge{
+ position:fixed;
+ top:10px;
+ right:10px;
+ background:#f59e0b;
+ color:white;
+ padding:8px 14px;
+ border-radius:20px;
+ font-weight:bold;
+ font-size:16px;
+ box-shadow:0 4px 10px rgba(0,0,0,0.2);
+ z-index:999;
+}
+ 
+ button{
  margin-top:12px;
  padding:14px;
  border:none;
@@ -209,6 +223,7 @@ input{
 </div>
 
 <div id="student" class="hidden">
+ <div id="modeBadge" class="hidden">🔤 Mode mot à mot</div>
 <div style="background:#eef2ff;padding:10px;border-radius:8px;margin-bottom:10px">
 <b>Consigne :</b> Écris la dictée puis clique sur vérifier. Les erreurs seront soulignées. Clique sur un mot souligné pour obtenir un indice.
 </div>
@@ -578,7 +593,7 @@ let message="";
 
  // 🔥 VERBE
 if(h === "er_é"){
- message = "Verbe : remplace par 'prendre' ou 'prendre' au passé → on entend quoi ?";
+ message = "Verbe : remplace le verbe du premier groupe par 'prendre' → si la phrase a un sens, il faut mettre le verbe à l'infinitif et donc la terminaison est -er";
 }
 else if(h === "imparfait"){
  message = "Verbe à l'imparfait : pense à 'il/ils ...ait / ...aient'.";
@@ -704,14 +719,15 @@ document.getElementById("hint").innerText=message;
 let isWordPlaying = false;
 
  function toggleWordByWord(){
-
- if(isWordPlaying){
-  speechSynthesis.cancel();
-  isWordPlaying = false;
-  document.getElementById("wordBtn").innerText = "▶️ Reprendre";
-  return;
- }
-
+const badge = document.getElementById("modeBadge");
+  
+if(isWordPlaying){
+ speechSynthesis.cancel();
+ isWordPlaying = false;
+ document.getElementById("wordBtn").innerText = "▶️ Reprendre";
+ badge.classList.add("hidden"); // 🔥 cache
+ return;
+}
  speechSynthesis.cancel();
 
  const words = addPunctuationSpeech(modelText).split(/\s+/);
@@ -736,9 +752,9 @@ let isWordPlaying = false;
 
   const u = new SpeechSynthesisUtterance(word);
   u.voice = getFrenchVoice();
-
   u.rate = (word.includes("point") || word.includes("virgule")) ? 0.6 : 0.8;
-
+u.pitch = 1;
+u.volume = 1;
   u.onend = ()=>{
    currentWordIndex++;
    setTimeout(speakNext, 500);
@@ -754,7 +770,8 @@ let isWordPlaying = false;
  }
 
  isWordPlaying = true;
- document.getElementById("wordBtn").innerText = "⏹️ Pause";
+document.getElementById("wordBtn").innerText = "⏹️ Pause";
+badge.classList.remove("hidden"); // 🔥 affiche
 
  speakNext();
 }
@@ -789,16 +806,26 @@ for(let i=0; i<parts.length; i++){
  }
 }
  
- function speakNext(){
+ let repeat = 2;
 
-  if(!isSlowPlaying) return;
+function speakNext(){
+
+ if(!isSlowPlaying) return;
 
  if(slowIndex >= rebuilt.length){
-   isSlowPlaying = false;
+  repeat--;
+  if(repeat > 0){
    slowIndex = 0;
-   btn.innerText = "📝 Mode dictée réelle";
+   setTimeout(speakNext, 2000);
    return;
-}
+  }
+
+  isSlowPlaying = false;
+  slowIndex = 0;
+  repeat = 2;
+  btn.innerText = "📝 Mode dictée réelle";
+  return;
+ }
 
   let chunk = rebuilt[slowIndex].trim();
 
@@ -810,16 +837,17 @@ for(let i=0; i<parts.length; i++){
 
   const u = new SpeechSynthesisUtterance(chunk);
   u.voice = getFrenchVoice();
-  u.rate = 0.5;
-
+  u.rate = 0.35;
+u.pitch = 1;
+u.volume = 1;
   u.onend = () => {
 
    slowIndex++; // 🔥 avance ici
 
    let delay =
-    chunk.includes("point") ? 1800 :
-    chunk.includes("virgule") ? 1000 :
-    800;
+    chunk.includes("point") ? 2500 :
+    chunk.includes("virgule") ? 1500 :
+    1200;
 
    setTimeout(() => {
  speechSynthesis.cancel(); // 🔥 évite blocage
@@ -856,7 +884,9 @@ function togglePlay(){
  const text = addPunctuationSpeech(modelText);
  const u = new SpeechSynthesisUtterance(text);
  u.voice = getFrenchVoice();
- u.rate = 0.4;
+ u.rate = 0.6;
+ u.pitch = 1;
+u.volume = 1;
  u.onend = ()=>{
   isPlaying = false;
   document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
