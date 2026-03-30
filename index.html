@@ -42,22 +42,31 @@ textarea{
  font-size:20px;
 }
 
-
-
- 
 /* BOUTONS TABLETTE */
 #modeBadge{
  position:fixed;
- top:10px;
- right:10px;
- background:#f59e0b;
+ top:20px;
+ left:50%;
+ transform:translateX(-50%);
+ 
+ background:rgba(0,0,0,0.75);
  color:white;
- padding:8px 14px;
- border-radius:20px;
- font-weight:bold;
- font-size:16px;
- box-shadow:0 4px 10px rgba(0,0,0,0.2);
+ 
+ padding:10px 18px;
+ border-radius:30px;
+ 
+ font-weight:600;
+ font-size:15px;
+ 
+ backdrop-filter: blur(10px);
+ -webkit-backdrop-filter: blur(10px);
+ 
+ box-shadow:0 8px 20px rgba(0,0,0,0.25);
+ 
  z-index:999;
+ 
+ opacity:0;
+ transition:all 0.3s ease;
 }
  
  button{
@@ -184,7 +193,12 @@ input{
 }
 
 .hidden{
- display:none;
+ opacity:0;
+ pointer-events:none;
+}
+
+#modeBadge:not(.hidden){
+ opacity:1;
 }
   
 </style>
@@ -745,6 +759,7 @@ if(isWordPlaying){
    isWordPlaying = false;
    currentWordIndex = 0; // reset seulement à la fin
    document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
+   badge.classList.add("hidden");
    return;
   }
 
@@ -873,32 +888,50 @@ u.volume = 1;
 
 function togglePlay(){
 
- speechSynthesis.cancel();
+ const btn = document.getElementById("playBtn");
 
  if(isPlaying){
+  speechSynthesis.cancel();
   isPlaying = false;
-  document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
+  btn.innerText = "🔊 Écouter la dictée";
   return;
  }
 
  const text = addPunctuationSpeech(modelText);
- const u = new SpeechSynthesisUtterance(text);
- u.voice = getFrenchVoice();
- u.rate = 0.6;
- u.pitch = 1;
-u.volume = 1;
- u.onend = ()=>{
-  isPlaying = false;
-  document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
- };
 
- u.onerror = () => {
-  isPlaying = false;
- };
- speechSynthesis.speak(u);
+ // 🔥 découpe en phrases
+ const chunks = text.match(/[^\.!\?]+[\.!\?]+|[^\.!\?]+$/g);
+
+ let index = 0;
+
+ function speakNext(){
+
+  if(!isPlaying) return;
+
+  if(index >= chunks.length){
+   isPlaying = false;
+   btn.innerText = "🔊 Écouter la dictée";
+   return;
+  }
+
+  const u = new SpeechSynthesisUtterance(chunks[index]);
+  u.voice = getFrenchVoice();
+  u.rate = 0.6;
+  u.pitch = 1;
+  u.volume = 1;
+
+  u.onend = ()=>{
+   index++;
+   setTimeout(speakNext, 500);
+  };
+
+  speechSynthesis.speak(u);
+ }
 
  isPlaying = true;
- document.getElementById("playBtn").innerText = "⏹️ Arrêter";
+ btn.innerText = "⏹️ Arrêter";
+
+ speakNext();
 }
  
     
