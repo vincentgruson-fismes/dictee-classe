@@ -43,30 +43,41 @@ textarea{
 }
 
 /* BOUTONS TABLETTE */
-#modeBadge{
+
+#wordBubble{
  position:fixed;
- top:20px;
- left:50%;
- transform:translateX(-50%);
- 
- background:rgba(0,0,0,0.75);
+ bottom:20px;
+ right:20px;
+
+ width:70px;
+ height:70px;
+
+ border-radius:50%;
+ background:#f59e0b;
  color:white;
- 
- padding:10px 18px;
- border-radius:30px;
- 
- font-weight:600;
- font-size:15px;
- 
- backdrop-filter: blur(10px);
- -webkit-backdrop-filter: blur(10px);
- 
- box-shadow:0 8px 20px rgba(0,0,0,0.25);
- 
+
+ display:flex;
+ align-items:center;
+ justify-content:center;
+
+ font-size:28px;
+
+ box-shadow:0 10px 25px rgba(0,0,0,0.4);
+
  z-index:999;
- 
- opacity:0;
- transition:all 0.3s ease;
+
+ transition:transform 0.2s, background 0.2s;
+
+ touch-action: manipulation;
+}
+
+ #wordBubble:active{
+ transform:scale(0.9);
+}
+
+#wordBubble.active{
+ background:#dc2626;
+ transform:scale(1.1);
 }
  
  button{
@@ -197,9 +208,7 @@ input{
  pointer-events:none;
 }
 
-#modeBadge:not(.hidden){
- opacity:1;
-}
+
   
 </style>
 </head>
@@ -237,14 +246,13 @@ input{
 </div>
 
 <div id="student" class="hidden">
- <div id="modeBadge" class="hidden">🔤 Mode mot à mot</div>
-<div style="background:#eef2ff;padding:10px;border-radius:8px;margin-bottom:10px">
+ <div style="background:#eef2ff;padding:10px;border-radius:8px;margin-bottom:10px">
 <b>Consigne :</b> Écris la dictée puis clique sur vérifier. Les erreurs seront soulignées. Clique sur un mot souligné pour obtenir un indice.
 </div>
 <input id="studentName" placeholder="Prénom">
 <button id="playBtn" onclick="togglePlay()">🔊 Écouter la dictée</button>
 <button id="slowBtn" onclick="playDictationSlow()">📝 Mode dictée réelle</button>
-<button id="wordBtn" onclick="toggleWordByWord()">🔤 Lire mot à mot</button>
+<div id="wordBubble">🔤</div>
 <button onclick="toggleSize()">🔠 Taille +</button>
 <textarea id="studentText" placeholder="Tape la dictée..."></textarea>
 
@@ -267,6 +275,15 @@ input{
 </div>
 
 <script>
+
+ let globalInterval;
+ 
+ function keepAlive(){
+  if(speechSynthesis.speaking){
+    speechSynthesis.pause();
+    speechSynthesis.resume();
+  }
+}
 
  let teacherVerbs = [];
 let teacherVocab = [];
@@ -733,15 +750,18 @@ document.getElementById("hint").innerText=message;
 let isWordPlaying = false;
 
  function toggleWordByWord(){
-const badge = document.getElementById("modeBadge");
-  
-if(isWordPlaying){
- speechSynthesis.cancel();
- isWordPlaying = false;
- document.getElementById("wordBtn").innerText = "▶️ Reprendre";
- badge.classList.add("hidden"); // 🔥 cache
- return;
+ const bubble = document.getElementById("wordBubble");
+ let interval;
+
+ if(isWordPlaying){
+  speechSynthesis.cancel();
+  clearInterval(globalinterval);
+  isWordPlaying = false;
+  bubble.classList.remove("active");
+  bubble.innerText = "🔤";
+  return;
 }
+  
  speechSynthesis.cancel();
 
  const words = addPunctuationSpeech(modelText).split(/\s+/);
@@ -751,17 +771,19 @@ if(isWordPlaying){
   currentWordIndex = 0;
  }
 
- function speakNext(){
+globalInterval = setInterval(keepAlive, 1000);
+function speakNext(){
 
   if(!isWordPlaying) return;
 
   if(currentWordIndex >= words.length){
-   isWordPlaying = false;
-   currentWordIndex = 0; // reset seulement à la fin
-   document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
-   badge.classList.add("hidden");
-   return;
-  }
+ isWordPlaying = false;
+ currentWordIndex = 0;
+ bubble.classList.remove("active"); 
+   clearInterval(globalinterval);
+   bubble.innerText = "🔤";
+ return;
+}
 
   const word = words[currentWordIndex];
 
@@ -784,10 +806,10 @@ u.volume = 1;
   speechSynthesis.speak(u);
  }
 
- isWordPlaying = true;
-document.getElementById("wordBtn").innerText = "⏹️ Pause";
-badge.classList.remove("hidden"); // 🔥 affiche
-
+isWordPlaying = true;
+bubble.classList.add("active");
+  bubble.innerText = "⏸️";
+  
  speakNext();
 }
   
@@ -795,14 +817,16 @@ let isSlowPlaying = false;
 
 function playDictationSlow(){
 
+ globalInterval = setInterval(keepAlive, 1000);
  const btn = document.getElementById("slowBtn");
 
  if(isSlowPlaying){
-  speechSynthesis.cancel();
-  isSlowPlaying = false;
-  btn.innerText = "▶️ Reprendre dictée";
-  return;
- }
+ speechSynthesis.cancel();
+ clearInterval(globalInterval); 
+ isSlowPlaying = false;
+ btn.innerText = "▶️ Reprendre dictée";
+ return;
+}
 
  const text = addPunctuationSpeech(modelText);
 
@@ -838,9 +862,10 @@ function speakNext(){
   isSlowPlaying = false;
   slowIndex = 0;
   repeat = 2;
+  clearInterval(globalInterval);
   btn.innerText = "📝 Mode dictée réelle";
   return;
- }
+}
 
   let chunk = rebuilt[slowIndex].trim();
 
@@ -887,21 +912,24 @@ u.volume = 1;
  let isPlaying = false;
 
 function togglePlay(){
-
+globalInterval = setInterval(keepAlive, 1000);
+ 
  const btn = document.getElementById("playBtn");
 
  if(isPlaying){
-  speechSynthesis.cancel();
-  isPlaying = false;
-  btn.innerText = "🔊 Écouter la dictée";
-  return;
- }
+ speechSynthesis.cancel();
+ clearInterval(globalInterval); 
+ isPlaying = false;
+ btn.innerText = "🔊 Écouter la dictée";
+ return;
+}
 
  const text = addPunctuationSpeech(modelText);
 
  // 🔥 découpe en phrases
  const chunks = text.match(/[^\.!\?]+[\.!\?]+|[^\.!\?]+$/g);
-
+if(!chunks) return;
+ 
  let index = 0;
 
  function speakNext(){
@@ -909,10 +937,11 @@ function togglePlay(){
   if(!isPlaying) return;
 
   if(index >= chunks.length){
-   isPlaying = false;
-   btn.innerText = "🔊 Écouter la dictée";
-   return;
-  }
+ clearInterval(interval); // 🔥 IMPORTANT
+ isPlaying = false;
+ btn.innerText = "🔊 Écouter la dictée";
+ return;
+}
 
   const u = new SpeechSynthesisUtterance(chunks[index]);
   u.voice = getFrenchVoice();
@@ -944,6 +973,7 @@ function toggleSize(){
  }
 }
 
+ document.getElementById("wordBubble").onclick = toggleWordByWord;
 </script>
 
 </body>
