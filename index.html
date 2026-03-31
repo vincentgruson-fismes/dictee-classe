@@ -31,7 +31,6 @@ h2{
 
 /* TEXTE */
 textarea{
-
  width:100%;
  height:160px;
  margin-top:10px;
@@ -46,17 +45,19 @@ textarea{
  font-size:20px;
 }
 
-/* TEXTE ELEVE */
+/* TAILLE NORMALE */
 #studentText{
  font-size:22px;
 }
 
-/* MODE GROS TEXTE */
-body.large-text #studentText{
- font-size:30px;
-} 
- body.large-text{
- background:red;
+/* MOYEN */
+body.size-medium #studentText{
+ font-size:28px;
+}
+
+/* GRAND */
+body.size-large #studentText{
+ font-size:36px;
 }
 
 /* BOUTONS TABLETTE */
@@ -224,7 +225,7 @@ input{
 <button id="playBtn" onclick="togglePlay()">🔊 Écouter la dictée</button>
 <button id="slowBtn" onclick="playDictationSlow()">📝 Mode dictée réelle</button>
 <button id="wordBtn" onclick="toggleWordByWord()">🔤 Lire mot à mot</button>
-<button onclick="toggleSize()">🔠 Taille +</button>
+<button onclick="changeSize()">🔠 Taille du texte</button>
 <textarea id="studentText" placeholder="Tape la dictée..."></textarea>
 
  <button onclick="checkText()">Vérifier</button>
@@ -880,12 +881,23 @@ function togglePlay(){
 }
  
     
-function toggleSize(){
- largeMode=!largeMode;
- if(largeMode){
-  document.body.classList.add("large-text");
- }else{
-  document.body.classList.remove("large-text");
+let sizeMode = 0; // 0 = normal, 1 = moyen, 2 = grand
+
+function changeSize(){
+ sizeMode++;
+
+ if(sizeMode > 2){
+  sizeMode = 0;
+ }
+
+ // reset
+ document.body.classList.remove("size-medium", "size-large");
+
+ if(sizeMode === 1){
+  document.body.classList.add("size-medium");
+ }
+ else if(sizeMode === 2){
+  document.body.classList.add("size-large");
  }
 }
 
