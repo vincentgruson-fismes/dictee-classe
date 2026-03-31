@@ -222,8 +222,7 @@ input{
 <b>Consigne :</b> Écris la dictée puis clique sur vérifier. Les erreurs seront soulignées. Clique sur un mot souligné pour obtenir un indice.
 </div>
 <input id="studentName" placeholder="Prénom">
-<button id="playBtn" onclick="togglePlay()">🔊 Écouter la dictée</button>
-<button id="slowBtn" onclick="playDictationSlow()">📝 Mode dictée réelle</button>
+<button id="dictBtn" onclick="toggleDictation()">📝 Lire la dictée</button>
 <button id="wordBtn" onclick="toggleWordByWord()">🔤 Lire mot à mot</button>
 <button onclick="changeSize()">🔠 Taille du texte</button>
 <textarea id="studentText" placeholder="Tape la dictée..."></textarea>
@@ -768,118 +767,86 @@ let isWordPlaying = false;
  speakNext();
 }
   
-let isSlowPlaying = false;
+let isDictPlaying = false;
 
-function playDictationSlow(){
+function toggleDictation(){
 
- const btn = document.getElementById("slowBtn");
+ const btn = document.getElementById("dictBtn");
 
- if(isSlowPlaying){
+ // 🔴 STOP
+ if(isDictPlaying){
   speechSynthesis.cancel();
-  isSlowPlaying = false;
-  btn.innerText = "▶️ Reprendre dictée";
+  isDictPlaying = false;
+  btn.innerText = "📝 Lire la dictée";
   return;
  }
 
+ // 🟢 START → TOUJOURS DEPUIS LE DÉBUT
+ speechSynthesis.cancel();
+
  const text = addPunctuationSpeech(modelText);
 
+ // découpage intelligent (phrases + ponctuation)
  const parts = text.split(/(point|virgule|point d'interrogation|point d'exclamation)/);
- // reconstruire les morceaux correctement
-let rebuilt = [];
-for(let i=0; i<parts.length; i++){
- if(parts[i].trim() === "") continue;
 
- if(["point","virgule","point d'interrogation","point d'exclamation"].includes(parts[i])){
-  if(rebuilt.length > 0){
-   rebuilt[rebuilt.length - 1] += " " + parts[i];
+ let chunks = [];
+
+ for(let i=0; i<parts.length; i++){
+  if(parts[i].trim() === "") continue;
+
+  if(["point","virgule","point d'interrogation","point d'exclamation"].includes(parts[i])){
+   if(chunks.length > 0){
+    chunks[chunks.length - 1] += " " + parts[i];
+   }
+  } else {
+   chunks.push(parts[i]);
   }
- } else {
-  rebuilt.push(parts[i]);
  }
-}
- 
+
+ let index = 0;
+
  function speakNext(){
 
-  if(!isSlowPlaying) return;
+  if(!isDictPlaying) return;
 
- if(slowIndex >= rebuilt.length){
-   isSlowPlaying = false;
-   slowIndex = 0;
-   btn.innerText = "📝 Mode dictée réelle";
-   return;
-}
-
-  let chunk = rebuilt[slowIndex].trim();
-
-  if(chunk === ""){
-   slowIndex++;
-   speakNext();
+  if(index >= chunks.length){
+   isDictPlaying = false;
+   btn.innerText = "📝 Lire la dictée";
    return;
   }
+
+  let chunk = chunks[index].trim();
 
   const u = new SpeechSynthesisUtterance(chunk);
   u.voice = getFrenchVoice();
-  u.rate = 0.3;
+
+  // 🔥 ULTRA LENT (tu peux ajuster)
+  u.rate = 0.35;
 
   u.onend = () => {
 
-   slowIndex++; // 🔥 avance ici
+   index++;
 
    let delay =
     chunk.includes("point") ? 1800 :
     chunk.includes("virgule") ? 1000 :
     800;
 
-   setTimeout(() => {
- speechSynthesis.cancel(); // 🔥 évite blocage
- speakNext();
-}, delay);
- };
-  
+   setTimeout(speakNext, delay);
+  };
+
   u.onerror = () => {
-   isSlowPlaying = false;
+   isDictPlaying = false;
   };
 
   speechSynthesis.speak(u);
  }
 
- speechSynthesis.cancel();
- isSlowPlaying = true;
- btn.innerText = "⏸ Pause";
+ isDictPlaying = true;
+ btn.innerText = "⏹️ Arrêter";
 
  speakNext();
 }
-
- let isPlaying = false;
-
-function togglePlay(){
-
- speechSynthesis.cancel();
-
- if(isPlaying){
-  isPlaying = false;
-  document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
-  return;
- }
-
- const text = addPunctuationSpeech(modelText);
- const u = new SpeechSynthesisUtterance(text);
- u.voice = getFrenchVoice();
- u.rate = 0.4;
- u.onend = ()=>{
-  isPlaying = false;
-  document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
- };
-
- u.onerror = () => {
-  isPlaying = false;
- };
- speechSynthesis.speak(u);
-
- isPlaying = true;
- document.getElementById("playBtn").innerText = "⏹️ Arrêter";
-}
- 
     
 let sizeMode = 0; // 0 = normal, 1 = moyen, 2 = grand
 
