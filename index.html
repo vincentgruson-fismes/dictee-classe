@@ -42,45 +42,11 @@ textarea{
  font-size:20px;
 }
 
-/* BOUTONS TABLETTE */
 
-#wordBubble{
- position:fixed;
- bottom:20px;
- right:20px;
 
- width:70px;
- height:70px;
-
- border-radius:50%;
- background:#f59e0b;
- color:white;
-
- display:flex;
- align-items:center;
- justify-content:center;
-
- font-size:28px;
-
- box-shadow:0 10px 25px rgba(0,0,0,0.4);
-
- z-index:999;
-
- transition:transform 0.2s, background 0.2s;
-
- touch-action: manipulation;
-}
-
- #wordBubble:active{
- transform:scale(0.9);
-}
-
-#wordBubble.active{
- background:#dc2626;
- transform:scale(1.1);
-}
  
- button{
+/* BOUTONS TABLETTE */
+button{
  margin-top:12px;
  padding:14px;
  border:none;
@@ -204,11 +170,8 @@ input{
 }
 
 .hidden{
- opacity:0;
- pointer-events:none;
+ display:none;
 }
-
-
   
 </style>
 </head>
@@ -219,8 +182,8 @@ input{
 <h2>📚 Dictée autonome</h2>
 
 <div id="home">
-<button onclick="showTeacher()">👨‍🏫 Enseignant</button>
-<button onclick="showStudent()">👩‍🎓 Élève</button>
+<button onclick="showTeacher()">👨🏫 Enseignant</button>
+<button onclick="showStudent()">👩🎓 Élève</button>
 </div>
 
 <div id="teacher" class="hidden">
@@ -246,13 +209,13 @@ input{
 </div>
 
 <div id="student" class="hidden">
- <div style="background:#eef2ff;padding:10px;border-radius:8px;margin-bottom:10px">
+<div style="background:#eef2ff;padding:10px;border-radius:8px;margin-bottom:10px">
 <b>Consigne :</b> Écris la dictée puis clique sur vérifier. Les erreurs seront soulignées. Clique sur un mot souligné pour obtenir un indice.
 </div>
 <input id="studentName" placeholder="Prénom">
 <button id="playBtn" onclick="togglePlay()">🔊 Écouter la dictée</button>
 <button id="slowBtn" onclick="playDictationSlow()">📝 Mode dictée réelle</button>
-<div id="wordBubble">🔤</div>
+<button id="wordBtn" onclick="toggleWordByWord()">🔤 Lire mot à mot</button>
 <button onclick="toggleSize()">🔠 Taille +</button>
 <textarea id="studentText" placeholder="Tape la dictée..."></textarea>
 
@@ -275,15 +238,6 @@ input{
 </div>
 
 <script>
-
- let globalInterval;
- 
- function keepAlive(){
-  if(speechSynthesis.speaking){
-    speechSynthesis.pause();
-    speechSynthesis.resume();
-  }
-}
 
  let teacherVerbs = [];
 let teacherVocab = [];
@@ -624,7 +578,7 @@ let message="";
 
  // 🔥 VERBE
 if(h === "er_é"){
- message = "Verbe : remplace le verbe du premier groupe par 'prendre' → si la phrase a un sens, il faut mettre le verbe à l'infinitif et donc la terminaison est -er";
+ message = "Verbe : remplace par 'prendre' ou 'prendre' au passé → on entend quoi ?";
 }
 else if(h === "imparfait"){
  message = "Verbe à l'imparfait : pense à 'il/ils ...ait / ...aient'.";
@@ -750,18 +704,14 @@ document.getElementById("hint").innerText=message;
 let isWordPlaying = false;
 
  function toggleWordByWord(){
- const bubble = document.getElementById("wordBubble");
- let interval;
 
  if(isWordPlaying){
   speechSynthesis.cancel();
-  clearInterval(globalinterval);
   isWordPlaying = false;
-  bubble.classList.remove("active");
-  bubble.innerText = "🔤";
+  document.getElementById("wordBtn").innerText = "▶️ Reprendre";
   return;
-}
-  
+ }
+
  speechSynthesis.cancel();
 
  const words = addPunctuationSpeech(modelText).split(/\s+/);
@@ -771,27 +721,24 @@ let isWordPlaying = false;
   currentWordIndex = 0;
  }
 
-globalInterval = setInterval(keepAlive, 1000);
-function speakNext(){
+ function speakNext(){
 
   if(!isWordPlaying) return;
 
   if(currentWordIndex >= words.length){
- isWordPlaying = false;
- currentWordIndex = 0;
- bubble.classList.remove("active"); 
-   clearInterval(globalinterval);
-   bubble.innerText = "🔤";
- return;
-}
+   isWordPlaying = false;
+   currentWordIndex = 0; // reset seulement à la fin
+   document.getElementById("wordBtn").innerText = "🔤 Lire mot à mot";
+   return;
+  }
 
   const word = words[currentWordIndex];
 
   const u = new SpeechSynthesisUtterance(word);
   u.voice = getFrenchVoice();
+
   u.rate = (word.includes("point") || word.includes("virgule")) ? 0.6 : 0.8;
-u.pitch = 1;
-u.volume = 1;
+
   u.onend = ()=>{
    currentWordIndex++;
    setTimeout(speakNext, 500);
@@ -806,10 +753,9 @@ u.volume = 1;
   speechSynthesis.speak(u);
  }
 
-isWordPlaying = true;
-bubble.classList.add("active");
-  bubble.innerText = "⏸️";
-  
+ isWordPlaying = true;
+ document.getElementById("wordBtn").innerText = "⏹️ Pause";
+
  speakNext();
 }
   
@@ -817,16 +763,14 @@ let isSlowPlaying = false;
 
 function playDictationSlow(){
 
- globalInterval = setInterval(keepAlive, 1000);
  const btn = document.getElementById("slowBtn");
 
  if(isSlowPlaying){
- speechSynthesis.cancel();
- clearInterval(globalInterval); 
- isSlowPlaying = false;
- btn.innerText = "▶️ Reprendre dictée";
- return;
-}
+  speechSynthesis.cancel();
+  isSlowPlaying = false;
+  btn.innerText = "▶️ Reprendre dictée";
+  return;
+ }
 
  const text = addPunctuationSpeech(modelText);
 
@@ -845,26 +789,15 @@ for(let i=0; i<parts.length; i++){
  }
 }
  
- let repeat = 2;
+ function speakNext(){
 
-function speakNext(){
-
- if(!isSlowPlaying) return;
+  if(!isSlowPlaying) return;
 
  if(slowIndex >= rebuilt.length){
-  repeat--;
-  if(repeat > 0){
+   isSlowPlaying = false;
    slowIndex = 0;
-   setTimeout(speakNext, 2000);
+   btn.innerText = "📝 Mode dictée réelle";
    return;
-  }
-
-  isSlowPlaying = false;
-  slowIndex = 0;
-  repeat = 2;
-  clearInterval(globalInterval);
-  btn.innerText = "📝 Mode dictée réelle";
-  return;
 }
 
   let chunk = rebuilt[slowIndex].trim();
@@ -877,17 +810,16 @@ function speakNext(){
 
   const u = new SpeechSynthesisUtterance(chunk);
   u.voice = getFrenchVoice();
-  u.rate = 0.35;
-u.pitch = 1;
-u.volume = 1;
+  u.rate = 0.5;
+
   u.onend = () => {
 
    slowIndex++; // 🔥 avance ici
 
    let delay =
-    chunk.includes("point") ? 2500 :
-    chunk.includes("virgule") ? 1500 :
-    1200;
+    chunk.includes("point") ? 1800 :
+    chunk.includes("virgule") ? 1000 :
+    800;
 
    setTimeout(() => {
  speechSynthesis.cancel(); // 🔥 évite blocage
@@ -912,55 +844,31 @@ u.volume = 1;
  let isPlaying = false;
 
 function togglePlay(){
-globalInterval = setInterval(keepAlive, 1000);
- 
- const btn = document.getElementById("playBtn");
+
+ speechSynthesis.cancel();
 
  if(isPlaying){
- speechSynthesis.cancel();
- clearInterval(globalInterval); 
- isPlaying = false;
- btn.innerText = "🔊 Écouter la dictée";
- return;
-}
-
- const text = addPunctuationSpeech(modelText);
-
- // 🔥 découpe en phrases
- const chunks = text.match(/[^\.!\?]+[\.!\?]+|[^\.!\?]+$/g);
-if(!chunks) return;
- 
- let index = 0;
-
- function speakNext(){
-
-  if(!isPlaying) return;
-
-  if(index >= chunks.length){
- clearInterval(interval); // 🔥 IMPORTANT
- isPlaying = false;
- btn.innerText = "🔊 Écouter la dictée";
- return;
-}
-
-  const u = new SpeechSynthesisUtterance(chunks[index]);
-  u.voice = getFrenchVoice();
-  u.rate = 0.6;
-  u.pitch = 1;
-  u.volume = 1;
-
-  u.onend = ()=>{
-   index++;
-   setTimeout(speakNext, 500);
-  };
-
-  speechSynthesis.speak(u);
+  isPlaying = false;
+  document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
+  return;
  }
 
- isPlaying = true;
- btn.innerText = "⏹️ Arrêter";
+ const text = addPunctuationSpeech(modelText);
+ const u = new SpeechSynthesisUtterance(text);
+ u.voice = getFrenchVoice();
+ u.rate = 0.4;
+ u.onend = ()=>{
+  isPlaying = false;
+  document.getElementById("playBtn").innerText = "🔊 Écouter la dictée";
+ };
 
- speakNext();
+ u.onerror = () => {
+  isPlaying = false;
+ };
+ speechSynthesis.speak(u);
+
+ isPlaying = true;
+ document.getElementById("playBtn").innerText = "⏹️ Arrêter";
 }
  
     
@@ -973,7 +881,6 @@ function toggleSize(){
  }
 }
 
- document.getElementById("wordBubble").onclick = toggleWordByWord;
 </script>
 
 </body>
