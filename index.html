@@ -39,14 +39,23 @@ textarea{
  padding:12px;
  border:1px solid #ddd;
  border-radius:10px;
+}
+
+/* ENSEIGNANT (par défaut) */
+#teacher textarea{
  font-size:20px;
 }
 
+/* ELEVE */
 #student textarea{
  font-size:22px;
 }
 
- 
+/* MODE GROS TEXTE ELEVE */
+body.large-text #student textarea{
+ font-size:30px;
+}
+
 /* BOUTONS TABLETTE */
 button{
  margin-top:12px;
@@ -163,12 +172,6 @@ input{
 #student > div{
  font-size:22px;
  line-height:1.6;
-}
-
-/* MODE GROS TEXTE */
-.large-text #student textarea,
-.large-text #student .result{
- font-size:30px;
 }
 
 .hidden{
