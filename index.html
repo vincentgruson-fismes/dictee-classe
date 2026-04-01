@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -307,6 +307,13 @@ if(params.get("vocab")){
   .map(v => v.trim().toLowerCase());
 }
  
+// 🔥 MODE ÉLÈVE AUTOMATIQUE SI LIEN
+if(params.get("text")){
+document.getElementById("home").classList.add("hidden");
+document.getElementById("teacher").classList.add("hidden");
+document.getElementById("student").classList.remove("hidden");
+}
+
 function showTeacher(){
 document.getElementById("home").classList.add("hidden");
 document.getElementById("teacher").classList.remove("hidden");
@@ -872,3 +879,4 @@ function changeSize(){
 
 </body>
 </html>
+
