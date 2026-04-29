@@ -314,10 +314,14 @@ if(params.get("vocab")){
 }
  
 // 🔥 MODE ÉLÈVE AUTOMATIQUE SI LIEN
-if(params.get("text")){
-document.getElementById("home").classList.add("hidden");
-document.getElementById("teacher").classList.add("hidden");
-document.getElementById("student").classList.remove("hidden");
+const textParam = params.get("text");
+
+if(textParam !== null){
+ modelText = decodeURIComponent(textParam);
+
+ document.getElementById("home").classList.add("hidden");
+ document.getElementById("teacher").classList.add("hidden");
+ document.getElementById("student").classList.remove("hidden");
 }
 
 function showTeacher(){
