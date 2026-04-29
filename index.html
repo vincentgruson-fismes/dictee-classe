@@ -270,7 +270,12 @@ let teacherVocab = [];
   .replace(/é/g, "é") // ok
   .replace(/è/g, "è")
   .replace(/ê/g, "è")
-  
+.replace(/'/g, " ")
+  .replace(/\bl\s/g, "le ")
+  .replace(/\bd\s/g, "de ")         // apostrophe typographique → simple
+  .replace(/'/g, " ")         // enlève l’apostrophe
+  .replace(/\s+/g, " ");      // espaces propres
+
   // ponctuation
   .replace(/\./g, " point ")
   .replace(/,/g, " virgule ")
@@ -278,12 +283,6 @@ let teacherVocab = [];
   .replace(/!/g, " point d'exclamation ")
   .replace(/:/g, " deux points ")
   .replace(/;/g, " point-virgule ");
-}
-
-function cleanTextForSpeech(text){
- return text
-  .replace(/\s+/g, " ");      // espaces propres
-  .trim();
 }
   
  let errorStats = {
@@ -314,14 +313,10 @@ if(params.get("vocab")){
 }
  
 // 🔥 MODE ÉLÈVE AUTOMATIQUE SI LIEN
-const textParam = params.get("text");
-
-if(textParam !== null){
- modelText = decodeURIComponent(textParam);
-
- document.getElementById("home").classList.add("hidden");
- document.getElementById("teacher").classList.add("hidden");
- document.getElementById("student").classList.remove("hidden");
+if(params.get("text")){
+document.getElementById("home").classList.add("hidden");
+document.getElementById("teacher").classList.add("hidden");
+document.getElementById("student").classList.remove("hidden");
 }
 
 function showTeacher(){
@@ -739,8 +734,7 @@ let isWordPlaying = false;
 
  speechSynthesis.cancel();
 
- const clean = cleanTextForSpeech(addPunctuationSpeech(modelText));
- const words = clean.split(/\s+/);
+ const words = addPunctuationSpeech(modelText).split(/\s+/);
 
  // 🔥 NE PAS reset si on reprend
  if(currentWordIndex >= words.length){
@@ -802,7 +796,7 @@ function toggleDictation(){
  // 🟢 START → TOUJOURS DEPUIS LE DÉBUT
  speechSynthesis.cancel();
 
-const text = cleanTextForSpeech(addPunctuationSpeech(modelText));
+ const text = addPunctuationSpeech(modelText);
 
  // découpage intelligent (phrases + ponctuation)
  const parts = text.split(/(point|virgule|point d'interrogation|point d'exclamation)/);
@@ -890,4 +884,3 @@ function changeSize(){
 
 </body>
 </html>
-
