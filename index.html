@@ -270,6 +270,11 @@ let teacherVocab = [];
   .replace(/é/g, "é") // ok
   .replace(/è/g, "è")
   .replace(/ê/g, "è")
+  .replace(/'/g, " ")
+  .replace(/\bl\s/g, "le ")
+  .replace(/\bd\s/g, "de ")         // apostrophe typographique → simple
+  .replace(/'/g, " ")         // enlève l’apostrophe
+  .replace(/\s+/g, " ");      // espaces propres
 
   // ponctuation
   .replace(/\./g, " point ")
