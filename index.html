@@ -282,11 +282,8 @@ let teacherVocab = [];
 
 function cleanTextForSpeech(text){
  return text
-  .replace(/'/g, " ")
-  .replace(/\bl\s/g, "le ")
-  .replace(/\bd\s/g, "de ")         // apostrophe typographique → simple
-  .replace(/'/g, " ")         // enlève l’apostrophe
   .replace(/\s+/g, " ");      // espaces propres
+  .trim();
 }
   
  let errorStats = {
