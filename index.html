@@ -249,10 +249,11 @@ input{
 
  let teacherVerbs = [];
 let teacherVocab = [];
- speechSynthesis.cancel();
- window.speechSynthesis.onvoiceschanged = () => {
- speechSynthesis.getVoices();
-};
+ if ('speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = () => {
+    window.speechSynthesis.getVoices();
+  };
+}
   var currentWordIndex = 0;
  var slowIndex = 0;
  
