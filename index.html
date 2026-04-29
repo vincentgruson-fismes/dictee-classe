@@ -270,12 +270,7 @@ let teacherVocab = [];
   .replace(/é/g, "é") // ok
   .replace(/è/g, "è")
   .replace(/ê/g, "è")
-  .replace(/'/g, " ")
-  .replace(/\bl\s/g, "le ")
-  .replace(/\bd\s/g, "de ")         // apostrophe typographique → simple
-  .replace(/'/g, " ")         // enlève l’apostrophe
-  .replace(/\s+/g, " ");      // espaces propres
-
+  
   // ponctuation
   .replace(/\./g, " point ")
   .replace(/,/g, " virgule ")
@@ -283,6 +278,15 @@ let teacherVocab = [];
   .replace(/!/g, " point d'exclamation ")
   .replace(/:/g, " deux points ")
   .replace(/;/g, " point-virgule ");
+}
+
+function cleanTextForSpeech(text){
+ return text
+  .replace(/'/g, " ")
+  .replace(/\bl\s/g, "le ")
+  .replace(/\bd\s/g, "de ")         // apostrophe typographique → simple
+  .replace(/'/g, " ")         // enlève l’apostrophe
+  .replace(/\s+/g, " ");      // espaces propres
 }
   
  let errorStats = {
@@ -734,7 +738,8 @@ let isWordPlaying = false;
 
  speechSynthesis.cancel();
 
- const words = addPunctuationSpeech(modelText).split(/\s+/);
+ const clean = cleanTextForSpeech(addPunctuationSpeech(modelText));
+ const words = clean.split(/\s+/);
 
  // 🔥 NE PAS reset si on reprend
  if(currentWordIndex >= words.length){
@@ -796,7 +801,7 @@ function toggleDictation(){
  // 🟢 START → TOUJOURS DEPUIS LE DÉBUT
  speechSynthesis.cancel();
 
- const text = addPunctuationSpeech(modelText);
+const text = cleanTextForSpeech(addPunctuationSpeech(modelText));
 
  // découpage intelligent (phrases + ponctuation)
  const parts = text.split(/(point|virgule|point d'interrogation|point d'exclamation)/);
